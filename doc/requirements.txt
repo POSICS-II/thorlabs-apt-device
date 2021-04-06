@@ -1,0 +1,2 @@
+pyserial
+thorlabs_apt_protocol

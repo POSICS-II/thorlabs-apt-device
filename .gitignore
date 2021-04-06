@@ -1,0 +1,10 @@
+__pycache__
+.ipynb_checkpoints
+*.egg-info
+scratchpad*.ipynb
+installed_files.txt
+dist/
+build/
+.vscode/settings.json
+
+test_apt_device.py

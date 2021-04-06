@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pyserial = "*"
+thorlabs_apt_protocol = "*"
+
+[dev-packages]
+pylint = "*"
+sphinx = "*"
+setuptools = "*"
+wheel = "*"
+twine = "*"
