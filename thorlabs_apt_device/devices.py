@@ -266,10 +266,33 @@ class APTDevice_DC(APTDevice):
         """
         super().__init__(serial_port, controller=controller, bays=bays, channels=channels)
 
-        """Dictionary of status information for the device."""
+        """
+        On some devices, "forward" velocity moves towards negative encoder counts.
+        If that seems opposite to what is expected, this flag allows inversion of that logic.
+        This will also swap the meaning of "forward" and "reverse" limit switches to match the
+        movement direction.
+        """
+        self.invert_direction_logic = invert_direction_logic
+
+        """
+        Dictionary of status information for the device.
+        Keys are ``"position"``, ``"velocity"``, ``"forward_limit_switch"``,
+        ``"reverse_limit_switch"``, ``"moving_forward"``, ``"moving_reverse"``,
+        ``"jogging_forward"``, ``"jogging_reverse"``, ``"motor_connected"``, ``"homing"``,
+        ``"homed"``, ``"tracking"``, ``"interlock"``, ``"settled"``, ``"motion_error"``,
+        ``"motor_current_limit_reached"``, and ``"channel_enabled"``.
+        Note that not all keys are relevant to every device.
+        
+        The documentation states that position is measured in encoder counts, but velocity is
+        returned in real units of mm/second.
+
+        Additionally, information about the most recent status message which updated the
+        dictionary are also available as ``"msgid"``, ``"source"``, ``"dest"``, and
+        ``"chan_ident"``.
+        """
         self.status = {
             "position" : 0,
-            "velocity": 0,
+            "velocity": 0.0,
             "forward_limit_switch" : False,
             "reverse_limit_switch" : False,
             "moving_forward" : False,
@@ -285,18 +308,41 @@ class APTDevice_DC(APTDevice):
             "motion_error" : False,
             "motor_current_limit_reached" : False,
             "channel_enabled" : False,
+            # Update message fields
+            "msg" : "",
+            "msgid" : 0,
+            "source" : 0,
+            "dest" : 0,
+            "chan_ident" : 0,
         }
         
         """
-        On some devices (at least the TDC001), "forward" velocity moves towards negative encoder counts.
-        That seems opposite to what I'd expect, so this flag allows inversion of that logic.
+        Dictionary of velocity parameters.
+        Keys are ``"min_velocity"``, ``"max_velocity"``, and ``"acceleration"``.
+        Units are encoder counts/second for velocities and counts/second/second for acceleration.
         """
-        self.invert_direction_logic = invert_direction_logic
+        self.velparams = {
+            "min_velocity" : 0,
+            "max_velocity" : 0,
+            "acceleration" : 0,
+            # Update message fields
+            "msg" : "",
+            "msgid" : 0,
+            "source" : 0,
+            "dest" : 0,
+            "chan_ident" : 0,
+        }
+
+        # Request current velocity parameters
+        for bay in self.bays:
+            for channel in self.channels:
+                self._loop.call_soon_threadsafe(self._write, apt.mot_req_velparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
 
         # Home each device if requested
         if home:
             for bay_i, _ in enumerate(self.bays):
-                self.home(bay=bay_i)
+                for channel_i, _ in enumerate(self.channels):
+                    self.home(bay=bay_i, channel=channel_i)
 
 
     def _process_message(self, m):
@@ -304,6 +350,13 @@ class APTDevice_DC(APTDevice):
         if m.msg in ("mot_get_dcstatusupdate", "mot_move_stopped", "mot_move_completed"):
             # DC motor status update
             self.status.update(m._asdict())
+            # Scale velocity so it should be in mm/second
+            # The explaination of scaling in the documentation doesn't make sense, but
+            # dividing the returned value by 2.048 seems sensible (or by 2048 to give m/s)
+            self.status["velocity"] /= 2.048
+        elif m.msg in ("mot_get_velparams"):
+            # Velocity parameter update
+            self.velparams.update(m._asdict())
         else:
             self._log.debug(f"Received message (unhandled): {m}")
 
@@ -417,6 +470,8 @@ class APTDevice_DC(APTDevice):
         """
         self._log.debug(f"Setting velocity parameters to accel={acceleration}, max={max_velocity} [bay={self.bays[bay]:#x}, channel={self.channels[channel]}].")
         self._loop.call_soon_threadsafe(self._write, apt.mot_set_velparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel], min_velocity=0, acceleration=acceleration, max_velocity=max_velocity))
+        # Update status with new velocity parameters
+        self._loop.call_soon_threadsafe(self._write, apt.mot_req_velparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))
 
 
     def set_enabled(self, state=True, bay=0, channel=0):
