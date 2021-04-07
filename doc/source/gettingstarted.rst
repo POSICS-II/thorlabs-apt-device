@@ -58,10 +58,10 @@ Usage
     # stage.move_absolute(12345)
 
     # See all the status fields of the device
-    print(stage.status)
+    print(stage.status_)
 
     # See the position of first bay and channel (in encoder counts)
-    print(stage.status[0][0]["position"])
+    print(stage.status_[0][0]["position"])
 
     # Register for callbacks in case the device reports an error
     def error_callback(source, msgid, code, notes):
