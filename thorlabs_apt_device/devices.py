@@ -26,6 +26,7 @@ import serial
 import thorlabs_apt_protocol as apt
 
 from .enums import EndPoint
+from .unpacker import Unpacker
 
 class APTDevice():
 
@@ -56,7 +57,7 @@ class APTDevice():
         self._log.info("Opened serial port OK.")
 
         # APT protocol unpacker for decoding received messages
-        self._unpacker = apt.Unpacker(self._port, on_error="warn")
+        self._unpacker = Unpacker(self._port, on_error="warn")
 
         # ID numbers for controller, bay device and channel identification
         """ID code for the controller message :class:`EndPoint`."""
