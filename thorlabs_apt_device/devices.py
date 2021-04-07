@@ -29,17 +29,16 @@ from .enums import EndPoint, LEDMode
 from .unpacker import Unpacker
 
 class APTDevice():
+    """
+    Initialise and open serial device for the ThorLabs APT controller.
+
+    :param serial_port: The serial port where the device is attached.
+    :param controller: The destination :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>` for the controller.
+    :param bays: Tuple of :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>`\ (s) for the populated controller bays.
+    :param channels: Tuple of indices (1-based) for the controller bay's channels.
+    """
 
     def __init__(self, serial_port, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
-        """
-        Initialise and open serial device for the ThorLabs APT controller.
-
-        :param serial_port: The serial port where the device is attached.
-        :param controller: The destination :class:`EndPoint` for the controller.
-        :param bays: Tuple of :class:`EndPoint`(s) for the populated controller bays.
-        :param channels: Tuple of indices (1-based) for the controller bay's channels.
-        """
-
         self._log = logging.getLogger(__name__)
         self._log.info(f"Initialising serial port ({serial_port}).")
         # Open and configure serial port settings for ThorLabs APT controllers
@@ -60,12 +59,12 @@ class APTDevice():
         self._unpacker = Unpacker(self._port, on_error="warn")
 
         # ID numbers for controller, bay device and channel identification
-        """ID code for the controller message :class:`EndPoint`."""
         self.controller = controller
-        """Tuple of ID codes for the controller's card bay :class:`EndPoints`."""
+        """ID code for the controller message :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>`."""
         self.bays = bays
-        """Tuple of indexes for the the channels in card bays."""
+        """Tuple of ID codes for the controller's card bay :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>`\ (s)."""
         self.channels = channels
+        """Tuple of indexes for the the channels in card bays."""
 
         # List of functions to call when error notifications recieved
         self._error_callbacks = set()
@@ -75,13 +74,13 @@ class APTDevice():
 
         # Schedule the first check for incoming data on the serial port
         self._loop.call_soon(self._schedule_reads)
-        """Time to wait between read attempts on the serial port, in seconds."""
         self.read_interval = 0.01
+        """Time to wait between read attempts on the serial port, in seconds."""
 
         # Schedule sending of the "keep alive" acknowledgement commands
         self._loop.call_soon(self._schedule_keepalives)
-        """Time interval between sending of keepalive commands, in seconds."""
         self.keepalive_interval = 0.9
+        """Time interval between sending of keepalive commands, in seconds."""
 
         # Request the controller to start sending regular status updates
         for bay in self.bays:
@@ -200,7 +199,7 @@ class APTDevice():
         Register a function to be called in the case of an error being reported by the device.
 
         The function passed in should have the signature ``callback_function(source, msgid, code, notes)``,
-        where ``source`` is the :class:`EndPoint` where the message originated, ``msgid`` is the 
+        where ``source`` is the :class:`enums.EndPoint` where the message originated, ``msgid`` is the 
         type of message which triggered the error (or 0 if unknown or a spontaneous error),
         ``code`` is a numerical error code and ``notes`` is a string description.
 
@@ -253,52 +252,30 @@ class APTDevice():
         
 
 class APTDevice_DC(APTDevice):
+    """
+    Initialise and open serial device for a ThorLabs APT controller based on a DC motor drive,
+    such as a linear translation stage.
+
+    :param serial_port: The serial port where the device is attached.
+    :param home: Perform a homing operation on initialisation.
+    :param invert_direction_logic: Invert the meaning of "forward" and "reverse".
+    :param controller: The destination :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>` for the controller.
+    :param bays: Tuple of :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>`\ (s) for the populated controller bays.
+    :param channels: Tuple of indices (1-based) for the controller bay's channels.
+    """
 
     def __init__(self, serial_port, home=True, invert_direction_logic=False, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
-        """
-        Initialise and open serial device for a ThorLabs APT controller based on a DC motor drive,
-        such as a linear translation stage.
 
-        :param serial_port: The serial port where the device is attached.
-        :param home: Perform a homing operation on initialisation.
-        :param invert_direction_logic: Invert the meaning of "forward" and "reverse".
-        :param controller: The destination :class:`EndPoint` for the controller.
-        :param bays: Tuple of :class:`EndPoint`(s) for the populated controller bays.
-        :param channels: Tuple of indices (1-based) for the controller bay's channels.
-        """
         super().__init__(serial_port, controller=controller, bays=bays, channels=channels)
 
+        self.invert_direction_logic = invert_direction_logic
         """
         On some devices, "forward" velocity moves towards negative encoder counts.
         If that seems opposite to what is expected, this flag allows inversion of that logic.
         This will also swap the meaning of "forward" and "reverse" limit switches to match the
         movement direction.
         """
-        self.invert_direction_logic = invert_direction_logic
 
-        """
-        Array of dictionaries of status information for the bays and channels of the device.
-
-        As a device may have multiple card bays, each with multiple channels, this data structure
-        is an array of array of dicts. The first axis of the array indexes the bay, the second
-        indexes the channel.
-        For example, stage.status_[0][1] will return the status dictionary for the first bay, second
-        channel.
-
-        Keys for the dictionary are ``"position"``, ``"velocity"``, ``"forward_limit_switch"``,
-        ``"reverse_limit_switch"``, ``"moving_forward"``, ``"moving_reverse"``,
-        ``"jogging_forward"``, ``"jogging_reverse"``, ``"motor_connected"``, ``"homing"``,
-        ``"homed"``, ``"tracking"``, ``"interlock"``, ``"settled"``, ``"motion_error"``,
-        ``"motor_current_limit_reached"``, and ``"channel_enabled"``.
-        Note that not all keys are relevant to every device.
-        
-        The documentation states that position is measured in encoder counts, but velocity is
-        returned in real units of mm/second.
-
-        Additionally, information about the most recent status message which updated the
-        dictionary are also available as ``"msgid"``, ``"source"``, ``"dest"``, and
-        ``"chan_ident"``.
-        """
         self.status_ = [[{
             "position" : 0,
             "velocity": 0.0,
@@ -324,18 +301,31 @@ class APTDevice_DC(APTDevice):
             "dest" : 0,
             "chan_ident" : 0,
         }]*len(self.channels)]*len(self.bays)
-        # Status updates are received automatically (configured by APTDevice super class)
-        
         """
-        Array of dictionaries of velocity parameters.
+        Array of dictionaries of status information for the bays and channels of the device.
 
         As a device may have multiple card bays, each with multiple channels, this data structure
         is an array of array of dicts. The first axis of the array indexes the bay, the second
         indexes the channel.
+        For example, stage.status_[0][1] will return the status dictionary for the first bay, second
+        channel.
 
-        Keys are ``"min_velocity"``, ``"max_velocity"``, and ``"acceleration"``.
-        Units are encoder counts/second for velocities and counts/second/second for acceleration.
+        Keys for the dictionary are ``"position"``, ``"velocity"``, ``"forward_limit_switch"``,
+        ``"reverse_limit_switch"``, ``"moving_forward"``, ``"moving_reverse"``,
+        ``"jogging_forward"``, ``"jogging_reverse"``, ``"motor_connected"``, ``"homing"``,
+        ``"homed"``, ``"tracking"``, ``"interlock"``, ``"settled"``, ``"motion_error"``,
+        ``"motor_current_limit_reached"``, and ``"channel_enabled"``.
+        Note that not all keys are relevant to every device.
+        
+        The documentation states that position is measured in encoder counts, but velocity is
+        returned in real units of mm/second.
+
+        Additionally, information about the most recent status message which updated the
+        dictionary are also available as ``"msgid"``, ``"source"``, ``"dest"``, and
+        ``"chan_ident"``.
         """
+        # Status updates are received automatically (configured by APTDevice super class)
+        
         self.velparams_ = [[{
             "min_velocity" : 0,
             "max_velocity" : 0,
@@ -347,11 +337,31 @@ class APTDevice_DC(APTDevice):
             "dest" : 0,
             "chan_ident" : 0,
         }]*len(self.channels)]*len(self.bays)
+        """
+        Array of dictionaries of velocity parameters.
+
+        As a device may have multiple card bays, each with multiple channels, this data structure
+        is an array of array of dicts. The first axis of the array indexes the bay, the second
+        indexes the channel.
+
+        Keys are ``"min_velocity"``, ``"max_velocity"``, and ``"acceleration"``.
+        Units are encoder counts/second for velocities and counts/second/second for acceleration.
+        """
         # Request current velocity parameters
         for bay in self.bays:
             for channel in self.channels:
                 self._loop.call_soon_threadsafe(self._write, apt.mot_req_velparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
+        
 
+        self.genmoveparams_ = [[{
+            "backlash_distance" : 0,
+            # Update message fields
+            "msg" : "",
+            "msgid" : 0,
+            "source" : 0,
+            "dest" : 0,
+            "chan_ident" : 0,
+        }]*len(self.channels)]*len(self.bays)
         """
         Array of dictionaries of general move parameters.
 
@@ -362,30 +372,12 @@ class APTDevice_DC(APTDevice):
         The only documented parameter is the backlash compensation move distance,
         ``"backlash_distance"``, measured in encoder counts.
         """
-        self.genmoveparams_ = [[{
-            "backlash_distance" : 0,
-            # Update message fields
-            "msg" : "",
-            "msgid" : 0,
-            "source" : 0,
-            "dest" : 0,
-            "chan_ident" : 0,
-        }]*len(self.channels)]*len(self.bays)
         # Request current general move parameters
         for bay in self.bays:
             for channel in self.channels:
                 self._loop.call_soon_threadsafe(self._write, apt.mot_req_genmoveparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
 
-        """
-        Array of dictionaries of jog parameters.
 
-        As a device may have multiple card bays, each with multiple channels, this data structure
-        is an array of array of dicts. The first axis of the array indexes the bay, the second
-        indexes the channel.
-
-        Keys are ``"jog_mode"``, ``"step_size"``, ``"min_velocity"``, ``"acceleration"``,
-        ``"max_velocity"``, and "stop_mode".
-        """
         self.jogparams_ = [[{
             "jog_mode" : 0,
             "step_size" : 0,
@@ -400,25 +392,35 @@ class APTDevice_DC(APTDevice):
             "dest" : 0,
             "chan_ident" : 0,
         }]*len(self.channels)]*len(self.bays)
+        """
+        Array of dictionaries of jog parameters.
+
+        As a device may have multiple card bays, each with multiple channels, this data structure
+        is an array of array of dicts. The first axis of the array indexes the bay, the second
+        indexes the channel.
+
+        Keys are ``"jog_mode"``, ``"step_size"``, ``"min_velocity"``, ``"acceleration"``,
+        ``"max_velocity"``, and "stop_mode".
+        """
         # Request current jog parameters
         for bay in self.bays:
             for channel in self.channels:
                 self._loop.call_soon_threadsafe(self._write, apt.mot_req_jogparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
 
-        """
-        Array of dictionaries describing the LED modes.
-        
-        See :class:`LEDMode` for details on the different modes.
-        
-        As a device may have multiple card bays, each with multiple channels, this data structure
-        is an array of array of dicts. The first axis of the array indexes the bay, the second
-        indexes the channel.
-        """
         self.ledmodes_ = [[{
             LEDMode.IDENT : False,
             LEDMode.LIMITSWITCH : False,
             LEDMode.MOVING : False,
         }]*len(self.channels)]*len(self.bays)
+        """
+        Array of dictionaries describing the LED modes.
+        
+        See :class:`LEDMode <thorlabs_apt_device.enums.LEDMode>` for details on the different modes.
+        
+        As a device may have multiple card bays, each with multiple channels, this data structure
+        is an array of array of dicts. The first axis of the array indexes the bay, the second
+        indexes the channel.
+        """
         # Request current LED modes
         for bay in self.bays:
             for channel in self.channels:
@@ -687,7 +689,7 @@ class APTDevice_DC(APTDevice):
         """
         Configure the behaviour of the controller's status LEDs.
 
-        The ``mode_bits`` can be generated by composing values from the :class:`LEDMode` enum.
+        The ``mode_bits`` can be generated by composing values from the :class:`LEDMode <thorlabs_apt_device.enums.LEDMode>` enum.
         For example, ``LEDMode.IDENT | LEDMode.MOVING`` would set the LED to flash when the identify message is sent, and also when the motor is moving.
 
         :param mode_bits: Integer containing the relevant mode bits.
@@ -714,27 +716,21 @@ class TDC001(APTDevice_DC):
     def __init__(self, serial_port, home=True, invert_direction_logic=True):
         super().__init__(serial_port, home=home, invert_direction_logic=invert_direction_logic, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,))
         
-        """Alias to first bay/channel status_."""
         self.status = self.status_[0][0]
-        """Alias to first bay/channel velparams_"""
-        self.velparams = self.velparams_[0][0]
-        """Alias to first bay/channel genmoveparams_"""
-        self.genmoveparams = self.genmoveparams_[0][0]
-        """Alias to first bay/channel jogparams"""
-        self.jogparams = self.jogparams_[0][0]
-        """Alias to first bay/channel ledmodes_"""
-        self.ledmodes = self.ledmodes_[0][0]
-
-        """
-        Array of dictionaries of PID algorithm parameters.
-
-        As a device may have multiple card bays, each with multiple channels, this data structure
-        is an array of array of dicts. The first axis of the array indexes the bay, the second
-        indexes the channel.
+        """Alias to first bay/channel of :data:`APTDevice_DC.status_`."""
         
-        Keys are ``"proportional"``, ``"integral"``, ``"differential"``, ``"integral_limits"``, and
-        ``"filter_control"``.
-        """
+        self.velparams = self.velparams_[0][0]
+        """Alias to first bay/channel of :data:`APTDevice_DC.velparams_`"""
+        
+        self.genmoveparams = self.genmoveparams_[0][0]
+        """Alias to first bay/channel of :data:`APTDevice_DC.genmoveparams_`"""
+        
+        self.jogparams = self.jogparams_[0][0]
+        """Alias to first bay/channel of :data:`APTDevice_DC.jogparams_`"""
+        
+        self.ledmodes = self.ledmodes_[0][0]
+        """Alias to first bay/channel of :data:`APTDevice_DC.ledmodes_`"""
+        
         self.pidparams = {
             "proportional" : 0,
             "integral" : 0,
@@ -748,6 +744,16 @@ class TDC001(APTDevice_DC):
             "dest" : 0,
             "chan_ident" : 0,
         }
+        """
+        Array of dictionaries of PID algorithm parameters.
+
+        As a device may have multiple card bays, each with multiple channels, this data structure
+        is an array of array of dicts. The first axis of the array indexes the bay, the second
+        indexes the channel.
+        
+        Keys are ``"proportional"``, ``"integral"``, ``"differential"``, ``"integral_limits"``, and
+        ``"filter_control"``.
+        """
         # Request current PID parameters
         self._loop.call_soon_threadsafe(self._write, apt.mot_req_dcpidparams(source=EndPoint.HOST, dest=self.bays[0], chan_ident=self.channels[0]))
 

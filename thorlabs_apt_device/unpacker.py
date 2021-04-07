@@ -11,22 +11,31 @@ from thorlabs_apt_protocol.parsing import id_to_func
 
 
 class Unpacker:
+    """
+    Create an Unpacker to decode a byte stream into Thorlabs APT protocol messages.
+
+    The ``file_like`` parameter should be an object which data can be sourced from.
+    It should support the ``read()`` method.
+
+    The ``on_error`` parameter selects the action to take if invalid data is detected.
+    If set to ``"continue"`` (the default), bytes will be discarded if the byte sequence
+    does not appear to be a valid message.
+    If set to ``"warn"``, the behaviour is identical, but a warning message will be emitted.
+    To instead immediately abort the stream decoding and raise a ``RuntimeError``, set to ``"raise"``.
+
+    The ``Unpacker`` is a generator, so it may be iterated over. For example:
+
+    .. code-block:: python
+
+        unpacker = Unpacker(serial_port)
+        for msg in unpacker:
+            print(msg)
+
+    :param file_like: A file-like object which data can be ``read()`` from.
+    :param on_error: Action to take if invalid data is detected.
+    """
+
     def __init__(self, file_like=None, on_error="continue"):
-        """
-        Create an Unpacker to decode a byte stream into Thorlabs APT protocol messages.
-
-        The ``file_like`` parameter should be an object which data can be sourced from.
-        It should support the ``read()`` method.
-
-        The ``on_error`` parameter selects the action to take if invalid data is detected.
-        If set to ``"continue"`` (the default), bytes will be discarded if the byte sequence
-        does not appear to be a valid message.
-        If set to ``"warn"``, the behaviour is identical, but a warning message will be emitted.
-        To instead immediately abort the stream decoding and raise a ``RuntimeError``, set to ``"raise"``.
-
-        :param file_like: A file-like object which data can be `read()` from.
-        :param on_error: Action to take if invalid data is detected.
-        """
         if file_like is None:
             self._file = io.BytesIO()
         else:
@@ -121,7 +130,13 @@ class Unpacker:
                 await asyncio.sleep(0.001)
 
     def feed(self, data: bytes):
-        # Must support random access, if it does not, must be fed externally (e.g. serial)
+        """
+        Add byte data to the input stream.
+        
+        The input stream must support random access, if it does not, must be fed externally (e.g. serial)
+        
+        :param data: Byte array containing data to add.
+        """
         pos = self._file.tell()
         self._file.seek(0, 2)
         self._file.write(data)
