@@ -186,21 +186,23 @@ class APTDevice():
         # TODO: Process any messages common to all APT controllers (which ones?)
         if m.msg == "hw_response":
             # Should there be an error code? The documentation is a little unclear
-            self._log.warn("Received unknown event notification from APT device.")
+            self._log.warn(f"Received unknown event notification from APT device {m.source}.")
             for callback in self._error_callbacks:
-                callback(-1, "unknown")
+                callback(source=m.source, msgid=0, code=-1, notes="unknown")
         elif m.msg == "hw_rich_response":
-            self._log.warn(f"Received event notification code {m.code} from APT device: {m.notes}")
+            self._log.warn(f"Received event notification code {m.code} from APT device {m.source}: {m.notes}")
             for callback in self._error_callbacks:
-                callback(m.code, m.notes)
+                callback(source=m.source, msgid=m.msgid, code=m.code, notes=m.notes)
 
 
     def register_error_callback(self, callback_function):
         """
         Register a function to be called in the case of an error being reported by the device.
 
-        The function passed in should have the signature ``callback_function(code, note)``,
-        where ``code`` is a numerical error code and ``note`` is a string description.
+        The function passed in should have the signature ``callback_function(source, msgid, code, notes)``,
+        where ``source`` is the :class:`EndPoint` where the message originated, ``msgid`` is the 
+        type of message which triggered the error (or 0 if unknown or a spontaneous error),
+        ``code`` is a numerical error code and ``notes`` is a string description.
 
         :params callback_function: Function to call in case of device error.
         """
@@ -275,8 +277,15 @@ class APTDevice_DC(APTDevice):
         self.invert_direction_logic = invert_direction_logic
 
         """
-        Dictionary of status information for the device.
-        Keys are ``"position"``, ``"velocity"``, ``"forward_limit_switch"``,
+        Array of dictionaries of status information for the bays and channels of the device.
+
+        As a device may have multiple card bays, each with multiple channels, this data structure
+        is an array of array of dicts. The first axis of the array indexes the bay, the second
+        indexes the channel.
+        For example, stage.status[0][1] will return the status dictionary for the first bay, second
+        channel.
+
+        Keys for the dictionary are ``"position"``, ``"velocity"``, ``"forward_limit_switch"``,
         ``"reverse_limit_switch"``, ``"moving_forward"``, ``"moving_reverse"``,
         ``"jogging_forward"``, ``"jogging_reverse"``, ``"motor_connected"``, ``"homing"``,
         ``"homed"``, ``"tracking"``, ``"interlock"``, ``"settled"``, ``"motion_error"``,
@@ -290,7 +299,7 @@ class APTDevice_DC(APTDevice):
         dictionary are also available as ``"msgid"``, ``"source"``, ``"dest"``, and
         ``"chan_ident"``.
         """
-        self.status = {
+        self.status = [[{
             "position" : 0,
             "velocity": 0.0,
             "forward_limit_switch" : False,
@@ -314,14 +323,20 @@ class APTDevice_DC(APTDevice):
             "source" : 0,
             "dest" : 0,
             "chan_ident" : 0,
-        }
+        }]*len(self.channels)]*len(self.bays)
+        # Status updates are received automatically (configured by APTDevice super class)
         
         """
-        Dictionary of velocity parameters.
+        Array of dictionaries of velocity parameters.
+
+        As a device may have multiple card bays, each with multiple channels, this data structure
+        is an array of array of dicts. The first axis of the array indexes the bay, the second
+        indexes the channel.
+
         Keys are ``"min_velocity"``, ``"max_velocity"``, and ``"acceleration"``.
         Units are encoder counts/second for velocities and counts/second/second for acceleration.
         """
-        self.velparams = {
+        self.velparams = [[{
             "min_velocity" : 0,
             "max_velocity" : 0,
             "acceleration" : 0,
@@ -331,12 +346,77 @@ class APTDevice_DC(APTDevice):
             "source" : 0,
             "dest" : 0,
             "chan_ident" : 0,
-        }
-
+        }]*len(self.channels)]*len(self.bays)
         # Request current velocity parameters
         for bay in self.bays:
             for channel in self.channels:
                 self._loop.call_soon_threadsafe(self._write, apt.mot_req_velparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
+
+        """
+        Array of dictionaries of general move parameters.
+
+        As a device may have multiple card bays, each with multiple channels, this data structure
+        is an array of array of dicts. The first axis of the array indexes the bay, the second
+        indexes the channel.
+
+        The only documented parameter is the backlash compensation move distance,
+        ``"backlash_distance"``, measured in encoder counts.
+        """
+        self.genmoveparams = [[{
+            "backlash_distance" : 0,
+            # Update message fields
+            "msg" : "",
+            "msgid" : 0,
+            "source" : 0,
+            "dest" : 0,
+            "chan_ident" : 0,
+        }]*len(self.channels)]*len(self.bays)
+        # Request current general move parameters
+        for bay in self.bays:
+            for channel in self.channels:
+                self._loop.call_soon_threadsafe(self._write, apt.mot_req_genmoveparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
+
+        """
+        Array of dictionaries of jog parameters.
+
+        As a device may have multiple card bays, each with multiple channels, this data structure
+        is an array of array of dicts. The first axis of the array indexes the bay, the second
+        indexes the channel.
+
+        Keys are ``"jog_mode"``, ``"step_size"``, ``"min_velocity"``, ``"acceleration"``,
+        ``"max_velocity"``, and "stop_mode".
+        """
+        self.jogparams = [[{
+            "jog_mode" : 0,
+            "step_size" : 0,
+            "min_velocity" : 0,
+            "acceleration" : 0,
+            "max_velocity" : 0,
+            "stop_mode" : 0,
+            # Update message fields
+            "msg" : "",
+            "msgid" : 0,
+            "source" : 0,
+            "dest" : 0,
+            "chan_ident" : 0,
+        }]*len(self.channels)]*len(self.bays)
+        # Request current jog parameters
+        for bay in self.bays:
+            for channel in self.channels:
+                self._loop.call_soon_threadsafe(self._write, apt.mot_req_jogparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
+
+        """
+        Array of LED mode bit fields as integers. See :class:`LEDMode` for details.
+        
+        As a device may have multiple card bays, each with multiple channels, this data structure
+        is an array of array of dicts. The first axis of the array indexes the bay, the second
+        indexes the channel.
+        """
+        self.avmodes = [[0]*len(self.channels)]*len(self.bays)
+        # Request current LED modes
+        for bay in self.bays:
+            for channel in self.channels:
+                self._loop.call_soon_threadsafe(self._write, apt.mot_req_avmodes(source=EndPoint.HOST, dest=bay, chan_ident=channel))
 
         # Home each device if requested
         if home:
@@ -347,16 +427,52 @@ class APTDevice_DC(APTDevice):
 
     def _process_message(self, m):
         super()._process_message(m)
+        
+        # Decode bay and channel IDs and check if they match one of ours
+        if m.msg in ("mot_get_dcstatusupdate", "mot_move_stopped", "mot_move_completed", 
+                     "mot_get_velparams",
+                     "mot_get_genmoveparams", "mot_genmoveparams",
+                     "mot_get_jogparams",
+                     "mot_get_avmodes"):
+            if m.source == EndPoint.USB:
+                # Map USB controller endpoint to first bay
+                bay_i = 0
+            else:
+                # Check if source matches one of our bays
+                try:
+                    bay_i = self.bays.index(m.source)
+                except ValueError:
+                    # Ignore message from unknown bay id
+                    self._log.warn(f"Message {m.msg} has unrecognised source={m.source}.")
+                    return
+            # Check if channel matches one of our channels
+            try:
+                channel_i = self.channels.index(m.chan_ident)
+            except ValueError:
+                    # Ignore message from unknown channel id
+                    self._log.warn(f"Message {m.msg} has unrecognised channel={m.chan_ident}.")
+                    return
+        
+        # Act on each message type
         if m.msg in ("mot_get_dcstatusupdate", "mot_move_stopped", "mot_move_completed"):
-            # DC motor status update
-            self.status.update(m._asdict())
+            # DC motor status update message    
+            self.status[bay_i][channel_i].update(m._asdict())
             # Scale velocity so it should be in mm/second
             # The explaination of scaling in the documentation doesn't make sense, but
             # dividing the returned value by 2.048 seems sensible (or by 2048 to give m/s)
-            self.status["velocity"] /= 2.048
-        elif m.msg in ("mot_get_velparams"):
+            self.status[bay_i][channel_i]["velocity"] /= 2.048
+        elif m.msg == "mot_get_velparams":
             # Velocity parameter update
-            self.velparams.update(m._asdict())
+            self.velparams[bay_i][channel_i].update(m._asdict())
+        elif m.msg in ("mot_get_genmoveparams", "mot_genmoveparams"):
+            # General move parameter update
+            self.genmoveparams[bay_i][channel_i].update(m._asdict())
+        elif m.msg == "mot_get_jogparams":
+            # Jog move parameter update
+            self.jogparams[bay_i][channel_i].update(m._asdict())
+        elif m.msg == "mot_get_avmodes":
+            # LED mode parameter update
+            self.avmodes[bay_i][channel_i] = m.mode_bits
         else:
             self._log.debug(f"Received message (unhandled): {m}")
 
@@ -505,6 +621,8 @@ class APTDevice_DC(APTDevice):
         jog_mode = (2, 1)[bool(continuous)]
         self._log.debug(f"Setting jog parameters to size={size}, accel={acceleration}, max={max_velocity}, cont={continuous}, imm={immediate_stop} [bay={self.bays[bay]:#x}, channel={self.channels[channel]}].")
         self._loop.call_soon_threadsafe(self._write, apt.mot_set_jogparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel], step_size=size, min_velocity=0, acceleration=acceleration, max_velocity=max_velocity, jog_mode=jog_mode, stop_mode=stop_mode))
+        # Update status with new jog parameters
+        self._loop.call_soon_threadsafe(self._write, apt.mot_req_jogparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))
 
 
     def move_jog(self, direction="forward", bay=0, channel=0):
@@ -550,7 +668,9 @@ class APTDevice_DC(APTDevice):
         """
         self._log.debug(f"Setting move parameters to backlash={backlash_distance} steps [bay={self.bays[bay]:#x}, channel={self.channels[channel]}].")
         self._loop.call_soon_threadsafe(self._write, apt.mot_set_genmoveparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel], backlash_distance=backlash_distance))
- 
+        # Update status with new general move parameters
+        self._loop.call_soon_threadsafe(self._write, apt.mot_req_genmoveparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))
+
 
     def set_led_mode(self, mode_bits, bay=0, channel=0):
         """
@@ -565,3 +685,5 @@ class APTDevice_DC(APTDevice):
         """
         self._log.debug(f"Setting LED mode to mode_bits={mode_bits} [bay={self.bays[bay]:#x}, channel={self.channels[channel]}].")
         self._loop.call_soon_threadsafe(self._write, apt.mot_set_avmodes(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel], mode_bits=mode_bits))
+        # Update status with new LED parameters
+        self._loop.call_soon_threadsafe(self._write, apt.mot_req_avmodes(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))

@@ -49,7 +49,7 @@ Usage
     # On Windows, your serial port may be called COM3, COM5 etc.
     stage = APTDevice_DC("/dev/ttyUSB0")
 
-    # Flash the LED on the device to identify it
+    # Flash the LED on the device to identify it (default is first bay/channel)
     stage.identify()
 
     # Do some moves (encoder counts)
@@ -60,13 +60,13 @@ Usage
     # See all the status fields of the device
     print(stage.status)
 
-    # See the position (in encoder counts)
-    print(stage.status["position"])
+    # See the position of first bay and channel (in encoder counts)
+    print(stage.status[0][0]["position"])
 
     # Register for callbacks in case the device reports an error
-    def error_callback(code, note):
+    def error_callback(source, msgid, code, notes):
         # Hopefully never see this!
-        print(f"Device reported error code {code}: {note}")
+        print(f"Device {source} reported error code {code}: {note}")
     stage.register_error_callback(error_callback)
 
 
