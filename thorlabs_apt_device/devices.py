@@ -76,7 +76,7 @@ class APTDevice():
         # Schedule the first check for incoming data on the serial port
         self._loop.call_soon(self._schedule_reads)
         """Time to wait between read attempts on the serial port, in seconds."""
-        self.read_interval = 0.025
+        self.read_interval = 0.01
 
         # Schedule sending of the "keep alive" acknowledgement commands
         self._loop.call_soon(self._schedule_keepalives)
