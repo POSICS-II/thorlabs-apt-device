@@ -14,4 +14,5 @@ Submodules
 
    thorlabs_apt_device.devices.aptdevice
    thorlabs_apt_device.devices.aptdevice_dc
+   thorlabs_apt_device.devices.bbd
    thorlabs_apt_device.devices.tdc001
