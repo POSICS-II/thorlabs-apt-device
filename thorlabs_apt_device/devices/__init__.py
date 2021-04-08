@@ -20,3 +20,4 @@ Classes to interface to devices which communicate using the ThorLabs APT protoco
 from .aptdevice import *
 from .aptdevice_dc import *
 from .tdc001 import *
+from .bbd import *
