@@ -14,15 +14,9 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Python interface to ThorLabs devices which use the APT protocol.
-
-Note that everything important from the submodules is imported directly here to the main package.
-This means you may use code like ``from thorlabs_apt_device import APTDevice`` (instead of
-using the full ``from thorlabs_apt_device.devices.aptdevice import APTDevice`` or similar).
+Classes to interface to devices which communicate using the ThorLabs APT protocol.
 """
 
-__version__ = "0.1.0"
-
-from .devices import *
-from .enums import *
-from .utils import *
+from .aptdevice import *
+from .aptdevice_dc import *
+from .tdc001 import *
