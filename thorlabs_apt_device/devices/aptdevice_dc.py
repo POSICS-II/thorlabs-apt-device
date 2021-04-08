@@ -70,7 +70,7 @@ class APTDevice_DC(APTDevice):
             "source" : 0,
             "dest" : 0,
             "chan_ident" : 0,
-        }]*len(self.channels)]*len(self.bays)
+        } for _ in self.channels] for _ in self.bays]
         """
         Array of dictionaries of status information for the bays and channels of the device.
 
@@ -106,7 +106,7 @@ class APTDevice_DC(APTDevice):
             "source" : 0,
             "dest" : 0,
             "chan_ident" : 0,
-        }]*len(self.channels)]*len(self.bays)
+        } for _ in self.channels] for _ in self.bays]
         """
         Array of dictionaries of velocity parameters.
 
@@ -131,7 +131,7 @@ class APTDevice_DC(APTDevice):
             "source" : 0,
             "dest" : 0,
             "chan_ident" : 0,
-        }]*len(self.channels)]*len(self.bays)
+        } for _ in self.channels] for _ in self.bays]
         """
         Array of dictionaries of general move parameters.
 
@@ -161,7 +161,7 @@ class APTDevice_DC(APTDevice):
             "source" : 0,
             "dest" : 0,
             "chan_ident" : 0,
-        }]*len(self.channels)]*len(self.bays)
+        } for _ in self.channels] for _ in self.bays]
         """
         Array of dictionaries of jog parameters.
 
@@ -181,7 +181,7 @@ class APTDevice_DC(APTDevice):
             LEDMode.IDENT : False,
             LEDMode.LIMITSWITCH : False,
             LEDMode.MOVING : False,
-        }]*len(self.channels)]*len(self.bays)
+        } for _ in self.channels] for _ in self.bays]
         """
         Array of dictionaries describing the LED modes.
         
