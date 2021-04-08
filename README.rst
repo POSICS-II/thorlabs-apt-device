@@ -10,6 +10,8 @@ straightforward to implement extension classes to support other devices.
 Support
 -------
 
+Documentation can be found online at `https://thorlabs-apt-device.readthedocs.io/en/latest/`_.
+
 Bug reports, feature requests and suggestions can be submitted to the `issue tracker <https://gitlab.com/ptapping/thorlabs-apt-device/-/issues>`_.
 
 
