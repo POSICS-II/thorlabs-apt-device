@@ -15,3 +15,4 @@ Submodules
    thorlabs_apt_device.devices
    thorlabs_apt_device.enums
    thorlabs_apt_device.unpacker
+   thorlabs_apt_device.utils
