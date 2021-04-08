@@ -13,14 +13,16 @@
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["APTDevice"]
+__all__ = ["APTDevice", "find_device"]
 
 import logging
 import asyncio
 from threading import Thread
 import atexit
+import re
 
 import serial
+from serial.tools import list_ports, list_ports_common
 import thorlabs_apt_protocol as apt
 
 from ..enums import EndPoint, LEDMode
@@ -30,13 +32,34 @@ class APTDevice():
     """
     Initialise and open serial device for the ThorLabs APT controller.
 
-    :param serial_port: The serial port where the device is attached.
+    If the ``serial_port`` parameter is ``None`` (default), then an attempt to detect an APT device
+    will be performed.
+    The first device found will be initialised.
+    If multiple devices are present on the system, then the use of the ``serial_number`` parameter
+    will specify a particular device by its serial number.
+    This is a `regular expression <https://docs.python.org/3/library/re.html>`_ match, for example
+    ``serial_number="83"`` would match devices with serial numbers
+    starting with 83, while ``serial_number=".*83$"`` would match devices ending in 83.
+
+    :param serial_port: Serial port device the device is connected to.
+    :param serial_number: Regular expression matching the serial number of device to search for.
     :param controller: The destination :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>` for the controller.
     :param bays: Tuple of :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>`\\ (s) for the populated controller bays.
     :param channels: Tuple of indices (1-based) for the controller bay's channels.
     """
 
-    def __init__(self, serial_port, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
+    def __init__(self, serial_port=None, serial_number="", controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
+        
+        # Accept a serial.tools.list_ports.ListPortInfo object
+        if isinstance(serial_port, list_ports_common.ListPortInfo):
+            serial_port = serial_port.device
+
+        # If serial_port not specified, search for a device
+        if serial_port is None:
+            serial_port = find_device(serial_number=serial_number).device
+        if serial_port is None:
+            raise RuntimeError(f"No Thorlabs APT devices detected.")
+
         self._log = logging.getLogger(__name__)
         self._log.info(f"Initialising serial port ({serial_port}).")
         # Open and configure serial port settings for ThorLabs APT controllers
@@ -248,3 +271,22 @@ class APTDevice():
             self._log.debug(f"Identifying [channel={self.channels[channel]}].")
             self._loop.call_soon_threadsafe(self._write, apt.mod_identify(source=EndPoint.HOST, dest=EndPoint.RACK, chan_ident=self.channels[channel]))
  
+
+def find_device(serial_number=""):
+    """
+    Search attached serial ports for a Thorlabs APT controller.
+
+    The first device found will be returned.
+    If multiple devices are attached to the system, the ``serial_number`` parameter may be used
+    to select the correct device. This is a regular expression match, for example
+    ``serial_number="83"`` would match devices with serial numbers starting with 83, while
+    ``serial_number=".*83$"`` would match devices ending in 83.
+
+    Note that the APT protocol documentation lists formats for device serial numbers.
+    For example, a TDC001 "DC Driver T-Cube" should have serial numbers starting with "83".
+
+    :param serial_number: Regular expression to match a device serial number.
+    """
+    for p in serial.tools.list_ports.comports():
+        if re.match("Thorlabs", p.manufacturer) and re.match("APT", p.product) and re.match(serial_number, p.serial_number):
+            return p

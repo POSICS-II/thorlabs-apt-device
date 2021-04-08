@@ -30,9 +30,14 @@ class TDC001(APTDevice_DC):
 
     Additionally, as it is a single bay/channel controller, aliases of ``status = status_[0][0]``
     etc are created for convenience.
+
+    :param serial_port: Serial port device the device is connected to.
+    :param serial_number: Regular expression matching the serial number of device to search for.
+    :param home: Perform a homing operation on initialisation.
+    :param invert_direction_logic: Invert the meaning of "forward" and "reverse".
     """
-    def __init__(self, serial_port, home=True, invert_direction_logic=True):
-        super().__init__(serial_port, home=home, invert_direction_logic=invert_direction_logic, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,))
+    def __init__(self, serial_port=None, serial_number="83", home=True, invert_direction_logic=True):
+        super().__init__(serial_port=serial_port, serial_number=serial_number, home=home, invert_direction_logic=invert_direction_logic, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,))
         
         self.status = self.status_[0][0]
         """Alias to first bay/channel of :data:`APTDevice_DC.status_`."""

@@ -25,7 +25,8 @@ class APTDevice_DC(APTDevice):
     Initialise and open serial device for a ThorLabs APT controller based on a DC motor drive,
     such as a linear translation stage.
 
-    :param serial_port: The serial port where the device is attached.
+    :param serial_port: Serial port device the device is connected to.
+    :param serial_number: Regular expression matching the serial number of device to search for.
     :param home: Perform a homing operation on initialisation.
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse".
     :param controller: The destination :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>` for the controller.
@@ -33,9 +34,9 @@ class APTDevice_DC(APTDevice):
     :param channels: Tuple of indices (1-based) for the controller bay's channels.
     """
 
-    def __init__(self, serial_port, home=True, invert_direction_logic=False, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
+    def __init__(self, serial_port=None, serial_number="", home=True, invert_direction_logic=False, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
 
-        super().__init__(serial_port, controller=controller, bays=bays, channels=channels)
+        super().__init__(serial_port=serial_port, serial_number=serial_number, controller=controller, bays=bays, channels=channels)
 
         self.invert_direction_logic = invert_direction_logic
         """
