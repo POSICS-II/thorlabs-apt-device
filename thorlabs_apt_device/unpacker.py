@@ -1,6 +1,8 @@
 # Our new and improved APT protocol unpacker, which we'll include
 # here until (if?) our merge request gets accepted.
 
+__all__ = ["Unpacker"]
+
 import asyncio
 from collections import namedtuple
 import io

@@ -17,6 +17,8 @@
 Enumerated values for the ThorLabs APT protocol.
 """
 
+__all__ = ["EndPoint", "LEDMode"]
+
 from enum import IntEnum
 
 class EndPoint(IntEnum):
