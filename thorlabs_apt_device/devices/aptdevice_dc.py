@@ -200,6 +200,7 @@ class APTDevice_DC(APTDevice):
         if home:
             for bay_i, _ in enumerate(self.bays):
                 for channel_i, _ in enumerate(self.channels):
+                    self.set_enabled(True, bay=bay_i, channel=channel_i)
                     self.home(bay=bay_i, channel=channel_i)
 
 
