@@ -50,15 +50,16 @@ class APTDevice():
 
     def __init__(self, serial_port=None, serial_number="", controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
         
-        # Accept a serial.tools.list_ports.ListPortInfo object
-        if isinstance(serial_port, list_ports_common.ListPortInfo):
-            serial_port = serial_port.device
-
         # If serial_port not specified, search for a device
         if serial_port is None:
-            serial_port = find_device(serial_number=serial_number).device
+            serial_port = find_device(serial_number=serial_number)
+
+        # Accept a serial.tools.list_ports.ListPortInfo object (which we may have just found)
+        if isinstance(serial_port, list_ports_common.ListPortInfo):
+            serial_port = serial_port.device
+        
         if serial_port is None:
-            raise RuntimeError(f"No Thorlabs APT devices detected.")
+            raise RuntimeError(f"No Thorlabs APT devices detected with serial_number matching '{serial_number}'.")
 
         self._log = logging.getLogger(__name__)
         self._log.info(f"Initialising serial port ({serial_port}).")
@@ -256,11 +257,11 @@ class APTDevice():
         # Note, this returns before event loop has actually stopped and serial port closed
 
 
-    def identify(self, channel=None):
+    def identify(self, channel=0):
         """
         Flash the device's front panel LEDs to identify the unit.
 
-        For some single-channel USB controlled devices (eg. TDC001), ``channel=None`` is used,
+        For some single-channel USB controlled devices ``channel=None`` is used,
         which sends the identify command to the USB controller :class:`EndPoint`.
         On devices which are considered "rack" controllers (including single-channel "rack" 
         units such as the BBD201), the ``channel`` parameter will actually refer to the card bay.
