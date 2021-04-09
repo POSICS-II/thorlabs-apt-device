@@ -260,7 +260,13 @@ class APTDevice():
         """
         Flash the device's front panel LEDs to identify the unit.
 
-        In card-slot (bay) controllers, the LED is on the front of the controller, not the individual cards, and ``channel=None`` should be used.
+        For some single-channel USB controlled devices (eg. TDC001), ``channel=None`` is used,
+        which sends the identify command to the USB controller :class:`EndPoint`.
+        On devices which are considered "rack" controllers (including single-channel "rack" 
+        units such as the BBD201), the ``channel`` parameter will actually refer to the card bay.
+        There are likely other types of units (though currently untested) which have a single "bay"
+        with multiple channels, and then the ``channel`` parameter would refer to the actual
+        channel index of the controller card.
 
         :param channel: Index (0-based) of controller bay channel to send the command.
         """
