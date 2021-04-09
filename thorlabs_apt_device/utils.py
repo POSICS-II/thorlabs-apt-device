@@ -68,7 +68,7 @@ def from_pos(pos, factor):
     :param factor: Conversion factor, encoder counts per unit.
     :returns: Number of encoder counts corresponding to ``pos``.
     """
-    return (factor*pos)
+    return int(factor*pos)
 
 def from_vel(vel, factor, t):
     """
@@ -83,7 +83,7 @@ def from_vel(vel, factor, t):
     :param t: Time unit for the controller.
     :returns: Number of encoder counts per unit time corresponding to ``vel``.
     """
-    return (factor*t*65536*vel)
+    return int(factor*t*65536*vel)
 
 def from_acc(acc, factor, t):
     """
@@ -98,7 +98,7 @@ def from_acc(acc, factor, t):
     :param t: Time unit for the controller.
     :returns: Number of encoder counts per unit time squared corresponding to ``acc``.
     """
-    return(factor*t*t*65536*acc)
+    return int(factor*t*t*65536*acc)
 
 def to_pos(count, factor):
     """
