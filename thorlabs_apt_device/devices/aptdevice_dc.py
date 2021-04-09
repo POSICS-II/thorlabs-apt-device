@@ -201,7 +201,9 @@ class APTDevice_DC(APTDevice):
             for bay_i, _ in enumerate(self.bays):
                 for channel_i, _ in enumerate(self.channels):
                     self.set_enabled(True, bay=bay_i, channel=channel_i)
-                    self.home(bay=bay_i, channel=channel_i)
+                    # Sending enabled then home immediately on the TDC001 locks it up.
+                    #self.home(bay=bay_i, channel=channel_i)
+                    self._loop.call_later(1.0, self.home, bay_i, channel_i)
 
 
     def _process_message(self, m):
