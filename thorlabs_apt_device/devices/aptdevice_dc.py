@@ -29,12 +29,13 @@ class APTDevice_DC(APTDevice):
     :param serial_number: Regular expression matching the serial number of device to search for.
     :param home: Perform a homing operation on initialisation.
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse".
+    :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
     :param controller: The destination :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>` for the controller.
     :param bays: Tuple of :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>`\\ (s) for the populated controller bays.
     :param channels: Tuple of indices (1-based) for the controller bay's channels.
     """
 
-    def __init__(self, serial_port=None, serial_number="", home=True, invert_direction_logic=False, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
+    def __init__(self, serial_port=None, serial_number="", home=True, invert_direction_logic=False, swap_limit_switches=False, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
 
         super().__init__(serial_port=serial_port, serial_number=serial_number, controller=controller, bays=bays, channels=channels)
 
@@ -42,8 +43,22 @@ class APTDevice_DC(APTDevice):
         """
         On some devices, "forward" velocity moves towards negative encoder counts.
         If that seems opposite to what is expected, this flag allows inversion of that logic.
-        This will also swap the meaning of "forward" and "reverse" limit switches to match the
-        movement direction.
+        This will also swap the meaning of the ``"moving_forward"`` and ``"moving_reverse"`` 
+        fields in the :data:`status` flags.
+        """
+
+        self.swap_limit_switches = swap_limit_switches
+        """
+        On some devices, the "forward" limit switch triggers when hitting the limit in the negative
+        encoder count direction, and the "reverse" limit switch triggers towards positive encoder 
+        counts.
+        If that seems opposite to what is expected, this flag swaps the values of the
+        ``"forward_limit_switch"`` and ``"reverse_limit_switch"`` fields in the :data:`status`
+        flags.
+
+        Note that this is independent of :data:`invert_direction_logic`.
+        A stage may report it is "moving forward" (towards either positive or negative encoder
+        counts), and then trigger the "reverse" limit switch.
         """
 
         self.status_ = [[{
@@ -242,6 +257,16 @@ class APTDevice_DC(APTDevice):
             # The explaination of scaling in the documentation doesn't make sense, but
             # dividing the returned value by 2.048 seems sensible (or by 2048 to give m/s)
             self.status_[bay_i][channel_i]["velocity"] /= 2.048
+            # Swap meaning of "moving foward" and "moving reverse" if requested
+            if self.invert_direction_logic:
+                tmp = self.status_[bay_i][channel_i]["moving_forward"]
+                self.status_[bay_i][channel_i]["moving_forward"] = self.status_[bay_i][channel_i]["moving_reverse"]
+                self.status_[bay_i][channel_i]["moving_reverse"] = tmp
+            # Swap values of limit switches if requested
+            if self.swap_limit_switches:
+                tmp = self.status_[bay_i][channel_i]["forward_limit_switch"]
+                self.status_[bay_i][channel_i]["forward_limit_switch"] = self.status_[bay_i][channel_i]["reverse_limit_switch"]
+                self.status_[bay_i][channel_i]["reverse_limit_switch"] = tmp
         elif m.msg == "mot_get_velparams":
             # Velocity parameter update
             self.velparams_[bay_i][channel_i].update(m._asdict())

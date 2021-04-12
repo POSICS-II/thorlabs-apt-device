@@ -36,8 +36,8 @@ class TDC001(APTDevice_DC):
     :param home: Perform a homing operation on initialisation.
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse".
     """
-    def __init__(self, serial_port=None, serial_number="83", home=True, invert_direction_logic=True):
-        super().__init__(serial_port=serial_port, serial_number=serial_number, home=home, invert_direction_logic=invert_direction_logic, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,))
+    def __init__(self, serial_port=None, serial_number="83", home=True, invert_direction_logic=True, swap_limit_switches=False):
+        super().__init__(serial_port=serial_port, serial_number=serial_number, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,))
         
         self.status = self.status_[0][0]
         """Alias to first bay/channel of :data:`APTDevice_DC.status_`."""
