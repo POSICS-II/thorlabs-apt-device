@@ -144,8 +144,6 @@ class BBD(APTDevice_DC):
                 self.trigger_[bay_i][channel_i]["output_mode"] = "max_velocity"
             else:
                 self.trigger_[bay_i][channel_i]["output_mode"] = "disabled"
-        elif m.msg == "mot_get_avmodes":
-            print(m)
 
 
     def set_trigger(self, input_edge=None, input_mode=None, output_logic=None, output_mode=None, bay=0, channel=0):
@@ -256,8 +254,6 @@ class BBD(APTDevice_DC):
         self._loop.call_soon_threadsafe(self._write, apt.mot_set_trigger(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel], mode=mode))
         # Update status with new trigger parameters
         self._loop.call_soon_threadsafe(self._write, apt.mot_req_trigger(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))
-
-        
 
 
 
