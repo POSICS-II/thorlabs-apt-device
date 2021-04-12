@@ -94,9 +94,6 @@ class BBD(APTDevice_DC):
             self.jogparams = self.jogparams_[0][0]
             """Alias to first bay/channel of :data:`APTDevice_DC.jogparams_`"""
             
-            self.ledmodes = self.ledmodes_[0][0]
-            """Alias to first bay/channel of :data:`APTDevice_DC.ledmodes_`"""
-
             self.trigger = self.trigger_[0][0]
             """Alias to first bay/channel of :data:`BBD.trigger_`"""
 
