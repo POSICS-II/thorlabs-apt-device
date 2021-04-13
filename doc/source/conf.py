@@ -22,7 +22,7 @@ copyright = '2021, Patrick Tapping'
 author = 'Patrick Tapping'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.2'
+release = '0.2.3'
 
 master_doc = 'index'
 
