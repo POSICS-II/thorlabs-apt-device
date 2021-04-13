@@ -21,7 +21,7 @@ This means you may use code like ``from thorlabs_apt_device import APTDevice`` (
 using the full ``from thorlabs_apt_device.devices.aptdevice import APTDevice`` or similar).
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 from .devices import *
 from .enums import *
