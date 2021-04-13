@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2020 yaq
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # Our new and improved APT protocol unpacker, which we'll include
 # here until (if?) our merge request gets accepted.
 
@@ -9,7 +31,7 @@ import io
 import struct
 import warnings
 
-from thorlabs_apt_protocol.parsing import id_to_func
+from .parsing import id_to_func
 
 
 class Unpacker:
@@ -23,20 +45,12 @@ class Unpacker:
     If set to ``"continue"`` (the default), bytes will be discarded if the byte sequence
     does not appear to be a valid message.
     If set to ``"warn"``, the behaviour is identical, but a warning message will be emitted.
-    To instead immediately abort the stream decoding and raise a ``RuntimeError``, set to ``"raise"``.
+    To instead immediately abort the stream decoding and raise a ``RuntimeError``, set to
+    ``"raise"``.
 
-    The ``Unpacker`` is a generator, so it may be iterated over. For example:
-
-    .. code-block:: python
-
-        unpacker = Unpacker(serial_port)
-        for msg in unpacker:
-            print(msg)
-
-    :param file_like: A file-like object which data can be ``read()`` from.
+    :param file_like: A file-like object which data can be `read()` from.
     :param on_error: Action to take if invalid data is detected.
     """
-
     def __init__(self, file_like=None, on_error="continue"):
         if file_like is None:
             self._file = io.BytesIO()
@@ -58,17 +72,19 @@ class Unpacker:
             msgid, length = struct.unpack_from("<HH", self.buf)
             if msgid in id_to_func:
                 # Looks like a message, now check the source and destination locations
-                long_form = self.buf[4] & 0x80 # Check MSB of byte 4 for "long form" flag
-                dest = self.buf[4] & ~0x80 # Destination is remaining lower bits
+                long_form = self.buf[4] & 0x80  # Check MSB of byte 4 for "long form" flag
+                dest = self.buf[4] & ~0x80  # Destination is remaining lower bits
                 source = self.buf[5]
-                # Destination should be the Host, source should be a recognised bay or controller ID
-                if (dest == 0x01) and (source in (0x11, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x50)):
+                # Destination should be the Host, source should be a recognised controller ID
+                if (dest == 0x01) and (source in (0x11, 0x21, 0x22, 0x23, 0x24, 0x25,
+                                                  0x26, 0x27, 0x28, 0x29, 0x2A, 0x50)):
                     # Message ID, source and dest seem legit, now check long form length
                     if long_form:
-                        # Documentation states "currently no datapacket exceeds 255 bytes in length"
+                        # Documentation says "currently no datapacket exceeds 255 bytes in length"
                         if length > 255:
-                            # A bad or malicious packet could make us try to read up to 65 kB, let's not do that
-                            errmsg = f"Invalid length={length} for message with id={msgid:#x}, src={source:#x}, dest={dest:#x}"
+                            # A bad or malicious packet could make us try to read up to 65 kB...
+                            errmsg = (f"Invalid length={length} for message with id={msgid:#x}, "
+                                      f"src={source:#x}, dest={dest:#x}")
                             if self.on_error == "raise":
                                 raise RuntimeError(errmsg)
                             if self.on_error == "warn":
@@ -84,7 +100,8 @@ class Unpacker:
                     break
                 else:
                     # Doesn't look like valid source or destination
-                    errmsg = f"Invalid source or destination for message with id={msgid:#x}, src={source:#x}, dest={dest:#x}"
+                    errmsg = (f"Invalid source or destination for message with id={msgid:#x}, "
+                              f"src={source:#x}, dest={dest:#x}")
                     if self.on_error == "raise":
                         raise RuntimeError(errmsg)
                     if self.on_error == "warn":
@@ -99,16 +116,17 @@ class Unpacker:
                     raise RuntimeError(errmsg)
                 if self.on_error == "warn":
                     warnings.warn(errmsg)
-                 # Advance buffer one byte ahead and try again
+                # Advance buffer one byte ahead and try again
                 self.buf = self.buf[1:]
                 continue
-        # If we got here, either the buffer was/shrank too small, or we have the start of something that looks like a valid message
+        # If we got here, either the buffer was/shrank too small,
+        # or we have the start of something that looks like a valid message
         if len(self.buf) < 6:
             # Not enough data to form a message packet
             raise StopIteration
         # Buffer contains enough for a short message, but maybe not a long form one
         if len(self.buf) < length + 6:
-            # Not enough data in buffer yet to decode long form message, attempt to read some more data
+            # Not enough data in buffer to decode long form message, attempt to read some more data
             self.buf += self._file.read(length - len(self.buf) + 6)
             if len(self.buf) < length + 6:
                 # Still didn't receive enough data to decode message
@@ -134,9 +152,10 @@ class Unpacker:
     def feed(self, data: bytes):
         """
         Add byte data to the input stream.
-        
-        The input stream must support random access, if it does not, must be fed externally (e.g. serial)
-        
+
+        The input stream must support random access, if it does not, must be fed externally
+        (e.g. serial port data).
+
         :param data: Byte array containing data to add.
         """
         pos = self._file.tell()

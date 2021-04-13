@@ -15,8 +15,7 @@
 
 __all__ = ["TDC001"]
 
-import thorlabs_apt_protocol as apt
-
+from .. import protocol as apt
 from .aptdevice_dc import APTDevice_DC
 from ..enums import EndPoint, LEDMode
 
@@ -36,7 +35,7 @@ class TDC001(APTDevice_DC):
     :param home: Perform a homing operation on initialisation.
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse".
     """
-    def __init__(self, serial_port=None, serial_number="83", home=True, invert_direction_logic=True, swap_limit_switches=False):
+    def __init__(self, serial_port=None, serial_number="83", home=True, invert_direction_logic=True, swap_limit_switches=True):
         super().__init__(serial_port=serial_port, serial_number=serial_number, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,))
         
         self.status = self.status_[0][0]
