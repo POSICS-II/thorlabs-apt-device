@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 pyserial = "*"
-thorlabs_apt_protocol = "*"
 
 [dev-packages]
 pylint = "*"

@@ -15,8 +15,7 @@
 
 __all__ = ["APTDevice_DC"]
 
-import thorlabs_apt_protocol as apt
-
+from .. import protocol as apt
 from .aptdevice import APTDevice
 from ..enums import EndPoint
 

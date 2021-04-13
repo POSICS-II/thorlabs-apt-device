@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3942358588fcda18d643c0ef615ab42e136cdb314695da52743e41bc69ce0378"
+            "sha256": "b2e81abd1bb84e6081a01dd1211ef55c5c99d1ee7e300c4d0d821a6fc5bb55ef"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -21,14 +21,6 @@
             ],
             "index": "pypi",
             "version": "==3.5"
-        },
-        "thorlabs-apt-protocol": {
-            "hashes": [
-                "sha256:7922d5ca70ca5d7c06d5efb696fbe27c47b4434c58cac05a9335ef30cc96113b",
-                "sha256:acaefa014c7c70d3f574a397d258693e99234fb1acd86df10dcd9119a366adbf"
-            ],
-            "index": "pypi",
-            "version": "==25.1.0"
         }
     },
     "develop": {
@@ -41,11 +33,11 @@
         },
         "astroid": {
             "hashes": [
-                "sha256:6b0ed1af831570e500e2437625979eaa3b36011f66ddfc4ce930128610258ca9",
-                "sha256:cd80bf957c49765dce6d92c43163ff9d2abc43132ce64d4b1b47717c6d2522df"
+                "sha256:ad63b8552c70939568966811a088ef0bc880f99a24a00834abd0e3681b514f91",
+                "sha256:bea3f32799fbb8581f58431c12591bc20ce11cbc90ad82e2ea5717d94f2080d5"
             ],
             "markers": "python_version >= '3.6'",
-            "version": "==2.5.2"
+            "version": "==2.5.3"
         },
         "babel": {
             "hashes": [
@@ -148,11 +140,11 @@
         },
         "docutils": {
             "hashes": [
-                "sha256:a71042bb7207c03d5647f280427f14bfbd1a65c9eb84f4b341d85fafb6bb4bdf",
-                "sha256:e2ffeea817964356ba4470efba7c2f42b6b0de0b04e66378507e3e2504bbff4c"
+                "sha256:0c5b78adfbf7762415433f5515cd5c9e762339e23369dbe8000d84a4bf4ab3af",
+                "sha256:c2de3a60e9e7d07be26b7f2b00ca0309c207e06c100f9cc2a94931fc75a478fc"
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'",
-            "version": "==0.17"
+            "version": "==0.16"
         },
         "idna": {
             "hashes": [
@@ -172,11 +164,11 @@
         },
         "importlib-metadata": {
             "hashes": [
-                "sha256:c9db46394197244adf2f0b08ec5bc3cf16757e9590b02af1fca085c16c0d600a",
-                "sha256:d2d46ef77ffc85cbf7dac7e81dd663fde71c45326131bea8033b9bad42268ebe"
+                "sha256:2ec0faae539743ae6aaa84b49a169670a465f7f5d64e6add98388cc29fd1f2f6",
+                "sha256:c9356b657de65c53744046fa8f7358afe0714a1af7d570c00c3835c2d724a7c1"
             ],
             "markers": "python_version >= '3.6'",
-            "version": "==3.10.0"
+            "version": "==3.10.1"
         },
         "isort": {
             "hashes": [
@@ -411,11 +403,11 @@
         },
         "sphinx": {
             "hashes": [
-                "sha256:3f01732296465648da43dec8fb40dc451ba79eb3e2cc5c6d79005fd98197107d",
-                "sha256:ce9c228456131bab09a3d7d10ae58474de562a6f79abb3dc811ae401cf8c1abc"
+                "sha256:19010b7b9fa0dc7756a6e105b2aacd3a80f798af3c25c273be64d7beeb482cb1",
+                "sha256:2320d4e994a191f4b4be27da514e46b3d6b420f2ff895d064f52415d342461e8"
             ],
             "index": "pypi",
-            "version": "==3.5.3"
+            "version": "==3.5.4"
         },
         "sphinxcontrib-applehelp": {
             "hashes": [

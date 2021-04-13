@@ -15,8 +15,7 @@
 
 __all__ = ["TDC001"]
 
-import thorlabs_apt_protocol as apt
-
+from .. import protocol as apt
 from .aptdevice_dc import APTDevice_DC
 from ..enums import EndPoint, LEDMode
 

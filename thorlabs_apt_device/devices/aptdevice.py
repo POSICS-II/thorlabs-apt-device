@@ -23,10 +23,9 @@ import re
 
 import serial
 from serial.tools import list_ports, list_ports_common
-import thorlabs_apt_protocol as apt
 
+from .. import protocol as apt
 from ..enums import EndPoint, LEDMode
-from ..unpacker import Unpacker
 
 class APTDevice():
     """
@@ -78,7 +77,7 @@ class APTDevice():
         self._log.info("Opened serial port OK.")
 
         # APT protocol unpacker for decoding received messages
-        self._unpacker = Unpacker(self._port, on_error="warn")
+        self._unpacker = apt.Unpacker(self._port, on_error="warn")
 
         # ID numbers for controller, bay device and channel identification
         self.controller = controller
