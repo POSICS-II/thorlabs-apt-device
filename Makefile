@@ -11,7 +11,7 @@ wheel:
 doc:
 	cd doc && $(MAKE) html
 
-upload: wheel
+upload: clean doc wheel
 	twine upload dist/*
 
 clean:
