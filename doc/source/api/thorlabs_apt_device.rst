@@ -13,6 +13,7 @@ Subpackages
    :maxdepth: 4
 
    thorlabs_apt_device.devices
+   thorlabs_apt_device.protocol
 
 Submodules
 ----------
@@ -21,5 +22,4 @@ Submodules
    :maxdepth: 4
 
    thorlabs_apt_device.enums
-   thorlabs_apt_device.unpacker
    thorlabs_apt_device.utils
