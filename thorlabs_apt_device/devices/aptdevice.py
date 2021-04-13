@@ -294,5 +294,9 @@ def find_device(serial_number=""):
     :param serial_number: Regular expression to match a device serial number.
     """
     for p in serial.tools.list_ports.comports():
-        if re.match("Thorlabs", p.manufacturer) and p.product and re.match("APT", p.product) and re.match(serial_number, p.serial_number):
+        # If manufacturer and product fields exist, try to use them
+        # We require a match on serial number though
+        if ((re.match("Thorlabs", p.manufacturer) if p.manufacturer else True)
+            and (re.match("APT", p.product) if p.product else True)
+            and (re.match(serial_number, p.serial_number) if p.serial_number else False)):
             return p
