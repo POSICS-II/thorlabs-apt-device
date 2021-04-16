@@ -62,63 +62,54 @@ class Unpacker:
     def __iter__(self):
         return self
 
+    def _decoding_error(self, message="Error decoding message from buffer."):
+        """
+        Take appropriate action if parsing of data stream fails.
+
+        :param message: Warning or error message string.
+        """
+        if self.on_error == "raise":
+            raise RuntimeError(message)
+        if self.on_error == "warn":
+            warnings.warn(message)
+        # Discard first byte of buffer, it might decode better now...
+        self.buf = self.buf[1:]
+
     def __next__(self):
         # Basic message packet is 6 bytes, try to fill buffer to at least that size
         if len(self.buf) < 6:
             self.buf += self._file.read(6 - len(self.buf))
-        # Hopefully enough data in buffer to try to decode a message
+        # Hopefully enough data in buffer now to try to decode a message
         while len(self.buf) >= 6:
-            # Look at first two bytes and see if they look like a message ID we recognise
+            # Look at first two bytes and ensure they look like a message ID we recognise
             msgid, length = struct.unpack_from("<HH", self.buf)
-            if msgid in id_to_func:
-                # Looks like a message, now check the source and destination locations
-                long_form = self.buf[4] & 0x80  # Check MSB of byte 4 for "long form" flag
-                dest = self.buf[4] & ~0x80  # Destination is remaining lower bits
-                source = self.buf[5]
-                # Destination should be the Host, source should be a recognised controller ID
-                if (dest == 0x01) and (source in (0x11, 0x21, 0x22, 0x23, 0x24, 0x25,
-                                                  0x26, 0x27, 0x28, 0x29, 0x2A, 0x50)):
-                    # Message ID, source and dest seem legit, now check long form length
-                    if long_form:
-                        # Documentation says "currently no datapacket exceeds 255 bytes in length"
-                        if length > 255:
-                            # A bad or malicious packet could make us try to read up to 65 kB...
-                            errmsg = (f"Invalid length={length} for message with id={msgid:#x}, "
-                                      f"src={source:#x}, dest={dest:#x}")
-                            if self.on_error == "raise":
-                                raise RuntimeError(errmsg)
-                            if self.on_error == "warn":
-                                warnings.warn(errmsg)
-                            # Advance buffer one byte and try again
-                            self.buf = self.buf[1:]
-                            continue
-                    else:
-                        # Length field is actually two parameters in short form messages
-                        length = 0
-                    # Either short form message, or long form message of reasonable size
-                    # Looks good! Break from loop and proceed
-                    break
-                else:
-                    # Doesn't look like valid source or destination
-                    errmsg = (f"Invalid source or destination for message with id={msgid:#x}, "
-                              f"src={source:#x}, dest={dest:#x}")
-                    if self.on_error == "raise":
-                        raise RuntimeError(errmsg)
-                    if self.on_error == "warn":
-                        warnings.warn(errmsg)
-                    # Advance buffer one byte and try again
-                    self.buf = self.buf[1:]
+            if not msgid in id_to_func:
+                self._decoding_error(f"Invalid message with id={msgid:#x}")
+                continue
+            # Looks like a message, now check the source and destination locations
+            long_form = self.buf[4] & 0x80  # Check MSB of byte 4 for "long form" flag
+            dest = self.buf[4] & ~0x80      # Destination is remaining lower bits
+            source = self.buf[5]
+            # Destination should be the Host, source should be a recognised controller ID
+            if not ((dest == 0x01) and (source in (0x11, 0x21, 0x22, 0x23, 0x24, 0x25,
+                                                   0x26, 0x27, 0x28, 0x29, 0x2A, 0x50))):
+                self._decoding_error("Invalid source or destination for message with id="
+                                    f"{msgid:#x}, src={source:#x}, dest={dest:#x}")
+                continue
+            # Message ID, source and dest seem legit, now check long form length
+            if long_form:
+                # A bad or malicious packet could make us try to read up to 65 kB...
+                # Documentation says "currently no datapacket exceeds 255 bytes in length"
+                if length > 255:
+                    self._decoding_error(f"Invalid length={length} for message with id={msgid:#x},"
+                                         f" src={source:#x}, dest={dest:#x}")
                     continue
             else:
-                # Doesn't look like a message ID we recognise
-                errmsg = f"Invalid message with id={msgid:#x}"
-                if self.on_error == "raise":
-                    raise RuntimeError(errmsg)
-                if self.on_error == "warn":
-                    warnings.warn(errmsg)
-                # Advance buffer one byte ahead and try again
-                self.buf = self.buf[1:]
-                continue
+                # Length field is actually two parameters in short form messages
+                length = 0
+            # Either short form message, or long form message of reasonable size
+            # Looks good! Break from loop and proceed
+            break                    
         # If we got here, either the buffer was/shrank too small,
         # or we have the start of something that looks like a valid message
         if len(self.buf) < 6:
