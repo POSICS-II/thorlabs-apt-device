@@ -19,7 +19,7 @@ License
 -------
 
 All original work is free and open source, licensed under the GNU Public License.
-See the `LICENSE.txt <https://gitlab.com/ptapping/thorlabs-apt-device/-/blob/main/LICENSE.txt>`_ for details.
+See the `LICENSE <https://gitlab.com/ptapping/thorlabs-apt-device/-/blob/main/LICENSE>`_ for details.
 
 A fork of the `thorlabs-apt-protocol <https://gitlab.com/yaq/thorlabs-apt-protocol>`_ library is
 included under the ``protocol`` directory, which remains under an MIT license.

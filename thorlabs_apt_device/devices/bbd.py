@@ -82,19 +82,19 @@ class BBD(APTDevice_DC):
 
         if x == 1:
             self.status = self.status_[0][0]
-            """Alias to first bay/channel of :data:`APTDevice_DC.status_`."""
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_DC.status_`."""
             
             self.velparams = self.velparams_[0][0]
-            """Alias to first bay/channel of :data:`APTDevice_DC.velparams_`"""
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_DC.velparams_`"""
             
             self.genmoveparams = self.genmoveparams_[0][0]
-            """Alias to first bay/channel of :data:`APTDevice_DC.genmoveparams_`"""
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_DC.genmoveparams_`"""
             
             self.jogparams = self.jogparams_[0][0]
-            """Alias to first bay/channel of :data:`APTDevice_DC.jogparams_`"""
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_DC.jogparams_`"""
             
             self.trigger = self.trigger_[0][0]
-            """Alias to first bay/channel of :data:`BBD.trigger_`"""
+            """Alias to first bay/channel of :data:`~BBD.trigger_`"""
 
 
     def _process_message(self, m):

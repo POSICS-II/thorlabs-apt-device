@@ -43,7 +43,7 @@ class APTDevice_DC(APTDevice):
         On some devices, "forward" velocity moves towards negative encoder counts.
         If that seems opposite to what is expected, this flag allows inversion of that logic.
         This will also swap the meaning of the ``"moving_forward"`` and ``"moving_reverse"`` 
-        fields in the :data:`status` flags.
+        fields in the :data:`status_` flags.
         """
 
         self.swap_limit_switches = swap_limit_switches
@@ -184,7 +184,7 @@ class APTDevice_DC(APTDevice):
         indexes the channel.
 
         Keys are ``"jog_mode"``, ``"step_size"``, ``"min_velocity"``, ``"acceleration"``,
-        ``"max_velocity"``, and "stop_mode".
+        ``"max_velocity"``, and ``"stop_mode"``.
         """
         # Request current jog parameters
         for bay in self.bays:

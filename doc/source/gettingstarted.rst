@@ -6,7 +6,7 @@ Prerequisites
 
 The only dependency for thorlabs_apt_device is the python serial library
 (`pyserial <https://pypi.org/project/pyserial/>`_) which should be installed automatically if using pip or similar.
-If obtaining the code by other means, ensure they are installed and can be found in your python path.
+If obtaining the code by other means, ensure it is installed and can be found in your python path.
 
 Installing the Software
 -----------------------
@@ -75,6 +75,7 @@ Usage
         print(f"Device {source} reported error code {code}: {note}")
     stage.register_error_callback(error_callback)
 
-
+See the documentation for the :mod:`~thorlabs_apt_device.utils` module for methods for converting real world units
+into your specific device's encoder counts.
 
 

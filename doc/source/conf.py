@@ -44,6 +44,11 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['Thumbs.db', '.DS_Store']
 
+# Mock import of these libraries, so they don't need to be available to generate the docs.
+autodoc_mock_imports = ["serial"]
+
+# Group properties and methods instead of sorting alphabetically.
+autodoc_member_order = "groupwise"
 
 # -- Options for HTML output -------------------------------------------------
 

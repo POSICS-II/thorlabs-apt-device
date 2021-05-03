@@ -21,7 +21,7 @@ from ..enums import EndPoint, LEDMode
 
 class TDC001(APTDevice_DC):
     """
-    A class specific to a particular ThorLabs APT device model.
+    A class specific to the ThorLabs TDC001 motion controller.
 
     It is based off :class:`APTDevice_DC` with some customisation for the specifics of the device.
     For example, the controller is single bay/channel, has inverted direction logic, and has a
@@ -34,6 +34,7 @@ class TDC001(APTDevice_DC):
     :param serial_number: Regular expression matching the serial number of device to search for.
     :param home: Perform a homing operation on initialisation.
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse".
+    :param swap_limit_switches: Swap the "forward" and "reverse" limit switch signals.
     """
     def __init__(self, serial_port=None, serial_number="83", home=True, invert_direction_logic=True, swap_limit_switches=True):
         super().__init__(serial_port=serial_port, serial_number=serial_number, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,))
