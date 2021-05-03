@@ -21,7 +21,7 @@ setuptools.setup(
     long_description=long_description,
     url="https://gitlab.com/ptapping/thorlabs-apt-device",
     project_urls={
-#        "Documentation": "https://thorlabs-apt-device.readthedocs.io/",
+        "Documentation": "https://thorlabs-apt-device.readthedocs.io/",
         "Source": "https://gitlab.com/ptapping/thorlabs-apt-device",
         "Tracker": "https://gitlab.com/ptapping/thorlabs-apt-device/-/issues",
     },
