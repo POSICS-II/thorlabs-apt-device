@@ -41,24 +41,29 @@ class APTDevice():
     starting with 83, while ``serial_number=".*83$"`` would match devices ending in 83.
 
     :param serial_port: Serial port device the device is connected to.
-    :param serial_number: Regular expression matching the serial number of device to search for.
+    :param vid: Numerical USB vendor ID to match.
+    :param pid: Numerical USB product ID to match.
+    :param manufacturer: Regular expression to match to a device manufacturer string.
+    :param product: Regular expression to match to a device product string.
+    :param serial_number: Regular expression to match to a device serial number.
+    :param location: Regular expression to match to a device physical location (eg. USB port).
     :param controller: The destination :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>` for the controller.
     :param bays: Tuple of :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>`\\ (s) for the populated controller bays.
     :param channels: Tuple of indices (1-based) for the controller bay's channels.
     """
 
-    def __init__(self, serial_port=None, serial_number="", controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number=None, location=None, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
         
         # If serial_port not specified, search for a device
         if serial_port is None:
-            serial_port = find_device(serial_number=serial_number)
+            serial_port = find_device(vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location)
 
         # Accept a serial.tools.list_ports.ListPortInfo object (which we may have just found)
         if isinstance(serial_port, list_ports_common.ListPortInfo):
             serial_port = serial_port.device
         
         if serial_port is None:
-            raise RuntimeError(f"No Thorlabs APT devices detected with serial_number matching '{serial_number}'.")
+            raise RuntimeError("No Thorlabs APT devices detected matching the selected criteria.")
 
         self._log = logging.getLogger(__name__)
         self._log.info(f"Initialising serial port ({serial_port}).")
@@ -278,25 +283,50 @@ class APTDevice():
             self._loop.call_soon_threadsafe(self._write, apt.mod_identify(source=EndPoint.HOST, dest=EndPoint.RACK, chan_ident=self.channels[channel]))
  
 
-def find_device(serial_number=""):
+def find_device(vid=None, pid=None, manufacturer=None, product=None, serial_number=None, location=None):
     """
-    Search attached serial ports for a Thorlabs APT controller.
+    Search attached serial ports for a specific device.
 
-    The first device found will be returned.
-    If multiple devices are attached to the system, the ``serial_number`` parameter may be used
-    to select the correct device. This is a regular expression match, for example
-    ``serial_number="83"`` would match devices with serial numbers starting with 83, while
+    The first device found matching the criteria will be returned.
+    Because there is no consistent way to identify Thorlabs APT devices, the default parameters do not
+    specify any selection criteria, and thus the first serial port will be returned.
+    A specific device should be selected using a unique combination of the parameters.
+
+    The USB vendor (``vid``) and product (``pid``) IDs are exact matches to the numerical values,
+    for example ``vid=0x067b`` or ``vid=1659``.
+    The remaining parameters are strings specifying a regular expression match to the corresponding field.
+    For example ``serial_number="83"`` would match devices with serial numbers starting with 83, while
     ``serial_number=".*83$"`` would match devices ending in 83.
+    A value of ``None`` means that the parameter should not be considered, however an empty string value 
+    (``""``) is subtly different, requiring the field to be present, but then matching any value.
 
     Note that the APT protocol documentation lists formats for device serial numbers.
     For example, a TDC001 "DC Driver T-Cube" should have serial numbers starting with "83".
 
-    :param serial_number: Regular expression to match a device serial number.
+    Be aware that different operating systems may return different data for the various fields, 
+    which can complicate matching.
+
+    To see a list of serial ports and the relevant data fields:
+
+    .. code-block: python
+
+        import serial
+        for p in list_ports.comports():
+            print(f"{p.device}, {p.manufacturer}, {p.product}, {p.vid}, {p.pid}, {p.serial_number}, {p.location}")
+
+    :param vid: Numerical USB vendor ID to match.
+    :param pid: Numerical USB product ID to match.
+    :param manufacturer: Regular expression to match to a device manufacturer string.
+    :param product: Regular expression to match to a device product string.
+    :param serial_number: Regular expression to match to a device serial number.
+    :param location: Regular expression to match to a device physical location (eg. USB port).
+    :returns: First :class:`~serial.tools.list_ports.ListPortInfo` device which matches given criteria.
     """
     for p in serial.tools.list_ports.comports():
-        # If manufacturer and product fields exist, try to use them
-        # We require a match on serial number though
-        if ((re.match("Thorlabs", p.manufacturer) if p.manufacturer else True)
-            and (re.match("APT", p.product) if p.product else True)
-            and (re.match(serial_number, p.serial_number) if p.serial_number else False)):
-            return p
+        if (vid is not None) and not vid == p.vid: continue
+        if (pid is not None) and not pid == p.pid: continue
+        if (manufacturer is not None) and ((p.manufacturer is None) or not re.match(manufacturer, p.manufacturer)): continue
+        if (product is not None) and ((p.product is None) or not re.match(product, p.product)): continue
+        if (serial_number is not None) and ((p.serial_number is None) or not re.match(serial_number, p.serial_number)): continue
+        if (location is not None) and ((p.location is None) or not re.match(location, p.location)): continue
+        return p

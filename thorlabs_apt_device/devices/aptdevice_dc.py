@@ -34,9 +34,9 @@ class APTDevice_DC(APTDevice):
     :param channels: Tuple of indices (1-based) for the controller bay's channels.
     """
 
-    def __init__(self, serial_port=None, serial_number="", home=True, invert_direction_logic=False, swap_limit_switches=False, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number=None, location=None, home=True, invert_direction_logic=False, swap_limit_switches=False, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
 
-        super().__init__(serial_port=serial_port, serial_number=serial_number, controller=controller, bays=bays, channels=channels)
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, controller=controller, bays=bays, channels=channels)
 
         self.invert_direction_logic = invert_direction_logic
         """

@@ -42,7 +42,7 @@ class BBD(APTDevice_DC):
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse" directions.
     :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
     """
-    def __init__(self, serial_port=None, serial_number="73", x=1, home=True, invert_direction_logic=False, swap_limit_switches=True):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="73", location=None, x=1, home=True, invert_direction_logic=False, swap_limit_switches=True):
         
         # Configure number of bays
         if x == 3:
@@ -52,7 +52,7 @@ class BBD(APTDevice_DC):
         else:
             bays = (EndPoint.BAY0,)
 
-        super().__init__(serial_port=serial_port, serial_number=serial_number, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, controller=EndPoint.RACK, bays=bays, channels=(1,))
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, controller=EndPoint.RACK, bays=bays, channels=(1,))
         
         self.trigger_ = [[{
             # Actual integer code returned by device

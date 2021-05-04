@@ -6,5 +6,6 @@ installed_files.txt
 dist/
 build/
 .vscode/settings.json
+.vscode/.ropeproject
 
 test_apt_device.py
