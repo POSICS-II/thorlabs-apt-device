@@ -19,6 +19,7 @@ For example, the :mod:`TDC001 <thorlabs_apt_device.devices.tdc001>` is a relativ
 motion controller, and the class to implement it is only a few lines of code since it is able to
 be derived from the :mod:`DC motor class <thorlabs_apt_device.devices.aptdevice_dc>`.
 
+Source code can be found `here <https://gitlab.com/ptapping/thorlabs-apt-device>`_.
 
 User Guide
 ----------
