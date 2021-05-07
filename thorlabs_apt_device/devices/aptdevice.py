@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["APTDevice", "find_device"]
+__all__ = ["APTDevice", "find_device", "list_devices"]
 
 import logging
 import asyncio
@@ -330,3 +330,26 @@ def find_device(vid=None, pid=None, manufacturer=None, product=None, serial_numb
         if (serial_number is not None) and ((p.serial_number is None) or not re.match(serial_number, p.serial_number)): continue
         if (location is not None) and ((p.location is None) or not re.match(location, p.location)): continue
         return p
+
+
+def list_devices():
+    """
+    Return a string listing all detected serial devices and any associated identifying properties.
+
+    The manufacturer, product, vendor ID (vid), product ID (pid), serial number, and physical
+    device location are provided.
+    These can be used as parameters to :meth:`find_device` or the constructor of a APTDevice class
+    to identify and select a specific serial device.
+
+    :returns: String listing all serial devices and their details.
+    """
+    result = ""
+    for p in serial.tools.list_ports.comports():
+        try:
+            vid = f"{p.vid:#06x}"
+            pid = f"{p.pid:#06x}"
+        except:
+            vid = p.vid
+            pid = p.pid
+        result += f"device={p.device}, manufacturer={p.manufacturer}, product={p.product}, vid={vid}, pid={pid}, serial_number={p.serial_number}, location={p.location}\n"
+    return result.strip("\n")
