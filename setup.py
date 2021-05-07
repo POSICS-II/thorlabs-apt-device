@@ -14,7 +14,7 @@ with open("README.rst", "r") as fh:
 
 setuptools.setup(
     name="thorlabs_apt_device",
-    version="0.2.3",
+    version="0.2.4",
     author="Patrick Tapping",
     author_email="mail@patricktapping.com",
     description="Interface to ThorLabs devices which communicate using the APT protocol.",
