@@ -16,14 +16,14 @@
 __all__ = ["TDC001"]
 
 from .. import protocol as apt
-from .aptdevice_dc import APTDevice_DC
+from .aptdevice_motor import APTDevice_Motor
 from ..enums import EndPoint, LEDMode
 
-class TDC001(APTDevice_DC):
+class TDC001(APTDevice_Motor):
     """
     A class specific to the ThorLabs TDC001 motion controller.
 
-    It is based off :class:`APTDevice_DC` with some customisation for the specifics of the device.
+    It is based off :class:`APTDevice_Motor` with some customisation for the specifics of the device.
     For example, the controller is single bay/channel, has inverted direction logic, and has a
     few extra device-specific commands.
 
@@ -40,16 +40,16 @@ class TDC001(APTDevice_DC):
         super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,))
         
         self.status = self.status_[0][0]
-        """Alias to first bay/channel of :data:`APTDevice_DC.status_`."""
+        """Alias to first bay/channel of :data:`APTDevice_Motor.status_`."""
         
         self.velparams = self.velparams_[0][0]
-        """Alias to first bay/channel of :data:`APTDevice_DC.velparams_`"""
+        """Alias to first bay/channel of :data:`APTDevice_Motor.velparams_`"""
         
         self.genmoveparams = self.genmoveparams_[0][0]
-        """Alias to first bay/channel of :data:`APTDevice_DC.genmoveparams_`"""
+        """Alias to first bay/channel of :data:`APTDevice_Motor.genmoveparams_`"""
         
         self.jogparams = self.jogparams_[0][0]
-        """Alias to first bay/channel of :data:`APTDevice_DC.jogparams_`"""
+        """Alias to first bay/channel of :data:`APTDevice_Motor.jogparams_`"""
         
         self.pidparams = {
             "proportional" : 0,

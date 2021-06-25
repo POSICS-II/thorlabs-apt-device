@@ -45,15 +45,15 @@ Usage
 .. code-block:: python
 
     # For a device based on a DC motor, such as a translation stage
-    from thorlabs_apt_device import APTDevice_DC
+    from thorlabs_apt_device import APTDevice_Motor
 
     # You can try to find a device automatically:
-    stage = APTDevice_DC()
+    stage = APTDevice_Motor()
     # Or, if you know the serial number of the device starts with "123":
-    # stage = APTDevice_DC(serial_number="123")
+    # stage = APTDevice_Motor(serial_number="123")
     # You can also specify the serial port device explicitly.
     # On Windows, your serial port may be called COM3, COM5 etc.
-    # stage = APTDevice_DC("/dev/ttyUSB0")
+    # stage = APTDevice_Motor("/dev/ttyUSB0")
 
     # Flash the LED on the device to identify it (default is first bay/channel)
     stage.identify()
