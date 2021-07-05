@@ -66,6 +66,7 @@ class APTDevice_Motor(APTDevice):
 
         self.status_ = [[{
             "position" : 0,
+            "enc_count" : 0,
             "velocity": 0.0,
             "forward_limit_switch" : False,
             "reverse_limit_switch" : False,
@@ -209,7 +210,7 @@ class APTDevice_Motor(APTDevice):
         super()._process_message(m)
         
         # Decode bay and channel IDs and check if they match one of ours
-        if m.msg in ("mot_get_dcstatusupdate", "mot_move_stopped", "mot_move_completed", 
+        if m.msg in ("mot_get_statusupdate", "mot_get_dcstatusupdate", "mot_move_stopped", "mot_move_completed", 
                      "mot_get_velparams",
                      "mot_get_genmoveparams", "mot_genmoveparams",
                      "mot_get_jogparams",
@@ -224,7 +225,8 @@ class APTDevice_Motor(APTDevice):
                 except ValueError:
                     # Ignore message from unknown bay id
                     self._log.warn(f"Message {m.msg} has unrecognised source={m.source}.")
-                    return
+                    bay_i = 0
+                    #return
             # Check if channel matches one of our channels
             try:
                 channel_i = self.channels.index(m.chan_ident)
@@ -234,14 +236,14 @@ class APTDevice_Motor(APTDevice):
                     return
         
         # Act on each message type
-        if m.msg in ("mot_get_dcstatusupdate", "mot_move_stopped", "mot_move_completed"):
+        if m.msg in ("mot_get_statusupdate", "mot_get_dcstatusupdate", "mot_move_stopped", "mot_move_completed"):
             # DC motor status update message    
             self.status_[bay_i][channel_i].update(m._asdict())
             # Scale velocity so it should be in mm/second
-            # The explaination of scaling in the documentation doesn't make sense, but
+            # The explanation of scaling in the documentation doesn't make sense, but
             # dividing the returned value by 2.048 seems sensible (or by 2048 to give m/s)
             self.status_[bay_i][channel_i]["velocity"] /= 2.048
-            # Swap meaning of "moving foward" and "moving reverse" if requested
+            # Swap meaning of "moving forward" and "moving reverse" if requested
             if self.invert_direction_logic:
                 tmp = self.status_[bay_i][channel_i]["moving_forward"]
                 self.status_[bay_i][channel_i]["moving_forward"] = self.status_[bay_i][channel_i]["moving_reverse"]

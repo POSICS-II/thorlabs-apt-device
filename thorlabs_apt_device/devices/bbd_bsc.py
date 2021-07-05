@@ -114,6 +114,6 @@ class BSC201(BBD_BSC):
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse" directions.
     :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
     """
-    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="40", location=None, x=1, home=True, invert_direction_logic=False, swap_limit_switches=True):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="40", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True):
 
-        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, x=x, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches)
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, x=1, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches)

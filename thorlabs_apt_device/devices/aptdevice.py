@@ -69,16 +69,17 @@ class APTDevice():
         self._log.info(f"Initialising serial port ({serial_port}).")
         # Open and configure serial port settings for ThorLabs APT controllers
         self._port = serial.Serial(serial_port,
-                                baudrate=115200,
-                                bytesize=serial.EIGHTBITS,
-                                parity=serial.PARITY_NONE,
-                                stopbits=serial.STOPBITS_ONE,
-                                timeout=0.1,
-                                rtscts=False)
-        self._port.rts = True
-        self._port.reset_input_buffer()
-        self._port.reset_output_buffer()
-        self._port.rts = False
+                                   #baudrate=115200,
+                                   #bytesize=serial.EIGHTBITS,
+                                   #parity=serial.PARITY_NONE,
+                                   #stopbits=serial.STOPBITS_ONE,
+                                   timeout=0.1,
+                                   #rtscts=False
+                                )
+        #self._port.rts = True
+        #self._port.reset_input_buffer()
+        #self._port.reset_output_buffer()
+        #self._port.rts = False
         self._log.info("Opened serial port OK.")
 
         # APT protocol unpacker for decoding received messages
@@ -103,14 +104,14 @@ class APTDevice():
         self.read_interval = 0.01
         """Time to wait between read attempts on the serial port, in seconds."""
 
-        # Schedule sending of the "keep alive" acknowledgement commands
-        self._loop.call_soon(self._schedule_keepalives)
-        self.keepalive_interval = 0.9
-        """Time interval between sending of keepalive commands, in seconds."""
-
         # Request the controller to start sending regular status updates
         for bay in self.bays:
-            self._loop.call_soon(self._write, apt.hw_start_updatemsgs(source=EndPoint.HOST, dest=bay))
+           self._loop.call_soon(self._write, apt.hw_start_updatemsgs(source=EndPoint.HOST, dest=bay))
+
+        # Schedule sending of the "keep alive" acknowledgement commands
+        self._loop.call_soon(self._schedule_keepalives)
+        self.keepalive_interval = 0.5
+        """Time interval between sending of keepalive commands, in seconds."""
 
         # Create a new thread to run the event loop in
         self._thread = Thread(target=self._run_eventloop)
@@ -185,7 +186,7 @@ class APTDevice():
         """
         #self._log.debug(f"Checking for data on serial port.")
         for msg in self._unpacker:
-            #self._log.debug(f"Received message: {msg}")
+            self._log.debug(f"Received message: {msg}")
             self._process_message(msg)
         # Schedule next check
         self._loop.call_later(self.read_interval, self._schedule_reads)
@@ -211,7 +212,7 @@ class APTDevice():
         # TODO: Process any messages common to all APT controllers (which ones?)
         if m.msg == "hw_response":
             # Should there be an error code? The documentation is a little unclear
-            self._log.warn(f"Received unknown event notification from APT device {m.source}.")
+            self._log.warn(f"Received unknown event notification from APT device {m.source}, {m.data[2:4]}.")
             for callback in self._error_callbacks:
                 callback(source=m.source, msgid=0, code=-1, notes="unknown")
         elif m.msg == "hw_rich_response":
