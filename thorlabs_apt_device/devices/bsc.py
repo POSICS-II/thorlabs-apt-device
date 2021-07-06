@@ -29,8 +29,7 @@ class BSC201(APTDevice_BayUnit):
 
     Note that it seems the BSC201 will send automatic status updates, but does not accept the 
     corresponding acknowledgement message, and so will stop responding after ~5 seconds if they are
-    enabled.
-    Instead, the status of the device needs to be polled.
+    enabled. As a workaround, the status of the device will be polled.
 
     Additionally, it seems that the initial movement and homing velocities can be effectively zero,
     making it seem like the device is not working, though it is actually just moving extremely
@@ -56,7 +55,7 @@ class BSC201(APTDevice_BayUnit):
 class BSC201_DRV250(BSC201):
     """
     A class for ThorLabs APT device model BSC201 with DRV250 stepper-motor-driven actuator, sold as
-    a package as the `LNR502 and LNR502E[https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=2297&pn=LNR502E/M]`__.
+    a package as the `LNR502 and LNR502E <https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=2297&pn=LNR502E/M>`__.
 
     It is based off :class:`BSC201`, but with sensible default movement parameters configured for the actuator.
 

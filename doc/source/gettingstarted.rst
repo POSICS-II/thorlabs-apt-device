@@ -44,18 +44,18 @@ Usage
 
 .. code-block:: python
 
-    # For a device based on a DC motor, such as a translation stage
-    from thorlabs_apt_device import APTDevice_Motor
+    # The BBD201 DC motor controller has a dedicated class which handles its specifics
+    from thorlabs_apt_device import BBD201
 
     # You can try to find a device automatically:
-    stage = APTDevice_Motor()
-    # Or, if you know the serial number of the device starts with "123":
-    # stage = APTDevice_Motor(serial_number="123")
+    stage = BBD201()
+    # Or, if you know the serial number of the device starts with "73123":
+    # stage = BBD201(serial_number="73123")
     # You can also specify the serial port device explicitly.
     # On Windows, your serial port may be called COM3, COM5 etc.
-    # stage = APTDevice_Motor("/dev/ttyUSB0")
+    # stage = BBD201("/dev/ttyUSB0")
 
-    # Flash the LED on the device to identify it (default is first bay/channel)
+    # Flash the LED on the device to identify it
     stage.identify()
 
     # Do some moves (encoder counts)
@@ -64,10 +64,10 @@ Usage
     # stage.move_absolute(12345)
 
     # See all the status fields of the device
-    print(stage.status_)
+    print(stage.status)
 
-    # See the position of first bay and channel (in encoder counts)
-    print(stage.status_[0][0]["position"])
+    # See the position (in encoder counts)
+    print(stage.status["position"])
 
     # Register for callbacks in case the device reports an error
     def error_callback(source, msgid, code, notes):

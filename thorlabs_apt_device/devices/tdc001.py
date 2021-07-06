@@ -19,6 +19,7 @@ from .. import protocol as apt
 from .aptdevice_motor import APTDevice_Motor
 from ..enums import EndPoint, LEDMode
 
+
 class TDC001(APTDevice_Motor):
     """
     A class specific to the ThorLabs TDC001 motion controller.
@@ -37,7 +38,7 @@ class TDC001(APTDevice_Motor):
     :param swap_limit_switches: Swap the "forward" and "reverse" limit switch signals.
     """
     def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="83", location=None, home=True, invert_direction_logic=True, swap_limit_switches=True):
-        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,))
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, status_updates="auto", controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,))
         
         self.status = self.status_[0][0]
         """Alias to first bay/channel of :data:`APTDevice_Motor.status_`."""
@@ -85,6 +86,7 @@ class TDC001(APTDevice_Motor):
         """
         # Request current LED modes
         self._loop.call_soon_threadsafe(self._write, apt.mot_req_avmodes(source=EndPoint.HOST, dest=self.bays[0], chan_ident=self.channels[0]))
+
 
     def _process_message(self, m):
         super()._process_message(m)

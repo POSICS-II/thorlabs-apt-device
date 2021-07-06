@@ -36,11 +36,10 @@ class BBD201(APTDevice_BayUnit):
     :param home: Perform a homing operation on initialisation.
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse" directions.
     :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
-    :param status_updates: Set to ``"auto"``, ``"polled"`` or ``"none"``.
     """
-    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="73", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True, status_updates="auto"):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="73", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True):
 
-        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, x=1, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, status_updates=status_updates)
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, x=1, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, status_updates="auto")
 
 
 class BBD202(APTDevice_BayUnit):
@@ -59,11 +58,10 @@ class BBD202(APTDevice_BayUnit):
     :param home: Perform a homing operation on initialisation.
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse" directions.
     :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
-    :param status_updates: Set to ``"auto"``, ``"polled"`` or ``"none"``.
     """
-    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="73", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True, status_updates="auto"):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="73", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True):
 
-        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, x=2, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, status_updates=status_updates)
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, x=2, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, status_updates="auto")
 
 
 class BBD203(APTDevice_BayUnit):
@@ -82,9 +80,8 @@ class BBD203(APTDevice_BayUnit):
     :param home: Perform a homing operation on initialisation.
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse" directions.
     :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
-    :param status_updates: Set to ``"auto"``, ``"polled"`` or ``"none"``.
     """
-    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="73", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True, status_updates="auto"):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="73", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True):
 
-        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, x=3, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, status_updates=status_updates)
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, x=3, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, status_updates="auto")
 
