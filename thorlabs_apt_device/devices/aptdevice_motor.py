@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["APTDevice_Motor", "APTDevice_Motor_Trigger"]
+__all__ = ["APTDevice_Motor", "APTDevice_Motor_Trigger", "APTDevice_BayUnit"]
 
 from .. import protocol as apt
 from .aptdevice import APTDevice
@@ -523,8 +523,6 @@ class APTDevice_Motor(APTDevice):
         self._loop.call_soon_threadsafe(self._write, apt.mot_req_homeparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))
 
 
-
-
 class APTDevice_Motor_Trigger(APTDevice_Motor):
     """
     A class for the ThorLabs APT device motor-driven families BSC, BBD, TBD and KBD.
@@ -728,4 +726,62 @@ class APTDevice_Motor_Trigger(APTDevice_Motor):
         self._loop.call_soon_threadsafe(self._write, apt.mot_req_trigger(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))
 
 
+class APTDevice_BayUnit(APTDevice_Motor_Trigger):
+    """
+    A class for ThorLabs APT bay-type device models BBD10x, BBD20x, BSC10x, BSC20x, where x is the number of channels (1, 2 or 3).
+
+    It is based off :class:`APTDevice_Motor_Trigger` with some customisation for the specifics of the device.
+
+    Note that the bay-type devices such as BBD and BSCs are referred to as a x-channel controllers,
+    but the actual device layout is that the controller is a "rack" system with three bays,
+    where x number of single-channel controller cards may be installed.
+    In other words, the BBD203 "3 channel" controller actually has 3 populated bays (``bays=(EndPoint.BAY0, EndPoint.BAY1, EndPoint.BAY2)``),
+    each of which only controls a single channel (``channels=(1,)``).
+
+    The parameter ``x`` configures the number of channels.
+    If ``x=1`` it is a single bay/channel controller, and aliases of ``status = status_[0][0]``
+    etc are created for convenience.
+
+    :param x: Number of channels the device controls.
+    :param serial_port: Serial port device the device is connected to.
+    :param vid: Numerical USB vendor ID to match.
+    :param pid: Numerical USB product ID to match.
+    :param manufacturer: Regular expression to match to a device manufacturer string.
+    :param product: Regular expression to match to a device product string.
+    :param serial_number: Regular expression to match to a device serial number.
+    :param home: Perform a homing operation on initialisation.
+    :param invert_direction_logic: Invert the meaning of "forward" and "reverse" directions.
+    :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
+    :param status_updates: Set to ``"auto"``, ``"polled"`` or ``"none"`` (default).
+    """
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number=None, location=None, x=1, home=True, invert_direction_logic=False, swap_limit_switches=True, status_updates="none"):
+        
+        # Configure number of bays
+        if x == 3:
+            bays = (EndPoint.BAY0, EndPoint.BAY1, EndPoint.BAY2)
+        elif x == 2:
+            bays = (EndPoint.BAY0, EndPoint.BAY1)
+        else:
+            bays = (EndPoint.BAY0,)
+
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, status_updates=status_updates, controller=EndPoint.RACK, bays=bays, channels=(1,))
+
+        if x == 1:
+            self.status = self.status_[0][0]
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_Motor.status_`."""
+            
+            self.velparams = self.velparams_[0][0]
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_Motor.velparams_`"""
+            
+            self.genmoveparams = self.genmoveparams_[0][0]
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_Motor.genmoveparams_`"""
+            
+            self.jogparams = self.jogparams_[0][0]
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_Motor.jogparams_`"""
+            
+            self.homeparams = self.homeparams_[0][0]
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_Motor.homeparams_`"""
+
+            self.trigger = self.trigger_[0][0]
+            """Alias to first bay/channel of :data:`~BBD.trigger_`"""
 
