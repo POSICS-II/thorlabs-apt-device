@@ -91,7 +91,7 @@ class Unpacker:
             dest = self.buf[4] & ~0x80      # Destination is remaining lower bits
             source = self.buf[5]
             # Destination should be the Host, source should be a recognised controller ID
-            if not ((dest == 0x01) and (source in (0x11, 0x21, 0x22, 0x23, 0x24, 0x25,
+            if not ((dest in (0x00, 0x01)) and (source in (0x00, 0x11, 0x21, 0x22, 0x23, 0x24, 0x25,
                                                    0x26, 0x27, 0x28, 0x29, 0x2A, 0x50))):
                 self._decoding_error("Invalid source or destination for message with id="
                                     f"{msgid:#x}, src={source:#x}, dest={dest:#x}")

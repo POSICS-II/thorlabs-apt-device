@@ -77,7 +77,6 @@ def _parse_status(data: bytes) -> Dict[str, Any]:
 
 def _parse_status_bits(status_bits: int) -> Dict[str, Any]:
     # Bitfield
-    # Tracking and interlock are the same bit?
     return {
         "forward_limit_switch": bool(status_bits & 0x1),
         "reverse_limit_switch": bool(status_bits & 0x2),
@@ -89,9 +88,9 @@ def _parse_status_bits(status_bits: int) -> Dict[str, Any]:
         "homing": bool(status_bits & 0x200),
         "homed": bool(status_bits & 0x400),
         "tracking": bool(status_bits & 0x1000),
-        "interlock": bool(status_bits & 0x1000),
         "settled": bool(status_bits & 0x2000),
         "motion_error": bool(status_bits & 0x4000),
+        "interlock": bool(status_bits & 0x10000),
         "motor_current_limit_reached": bool(status_bits & 0x1000000),
         "channel_enabled": bool(status_bits & 0x80000000),
     }

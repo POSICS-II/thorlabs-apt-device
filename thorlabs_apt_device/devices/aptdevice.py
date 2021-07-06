@@ -40,6 +40,17 @@ class APTDevice():
     ``serial_number="83"`` would match devices with serial numbers
     starting with 83, while ``serial_number=".*83$"`` would match devices ending in 83.
 
+    Status updates can be obtained automatically from the device by setting ``status_updates="auto"``,
+    which will request the controller to send regular updates, as well as sending the required "keepalive"
+    acknowledgement messages to maintain the connection to the controller.
+    In this case, ensure the :data:`keepalive_message` property is set correctly for the controller.
+
+    To instead query the device for status updates on a regular basis, set ``status_updates="polled"``,
+    in which case ensure the :data:`update_message` property is set correctly for the controller.
+
+    The default setting of ``status_updates="none"`` will mean that no status updates will be
+    performed, leaving the task up to sub-classes to implement.
+
     :param serial_port: Serial port device the device is connected to.
     :param vid: Numerical USB vendor ID to match.
     :param pid: Numerical USB product ID to match.
@@ -50,9 +61,10 @@ class APTDevice():
     :param controller: The destination :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>` for the controller.
     :param bays: Tuple of :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>`\\ (s) for the populated controller bays.
     :param channels: Tuple of indices (1-based) for the controller bay's channels.
+    :param status_updates: Set to ``"auto"``, ``"polled"`` or ``"none"``.
     """
 
-    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number=None, location=None, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number=None, location=None, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,), status_updates="none"):
         
         # If serial_port not specified, search for a device
         if serial_port is None:
@@ -69,17 +81,14 @@ class APTDevice():
         self._log.info(f"Initialising serial port ({serial_port}).")
         # Open and configure serial port settings for ThorLabs APT controllers
         self._port = serial.Serial(serial_port,
-                                   #baudrate=115200,
-                                   #bytesize=serial.EIGHTBITS,
-                                   #parity=serial.PARITY_NONE,
-                                   #stopbits=serial.STOPBITS_ONE,
+                                   baudrate=115200,
+                                   bytesize=serial.EIGHTBITS,
+                                   parity=serial.PARITY_NONE,
+                                   stopbits=serial.STOPBITS_ONE,
                                    timeout=0.1,
-                                   #rtscts=False
                                 )
-        #self._port.rts = True
-        #self._port.reset_input_buffer()
-        #self._port.reset_output_buffer()
-        #self._port.rts = False
+        self._port.reset_input_buffer()
+        self._port.reset_output_buffer()
         self._log.info("Opened serial port OK.")
 
         # APT protocol unpacker for decoding received messages
@@ -93,7 +102,7 @@ class APTDevice():
         self.channels = channels
         """Tuple of indexes for the the channels in card bays."""
 
-        # List of functions to call when error notifications recieved
+        # List of functions to call when error notifications received
         self._error_callbacks = set()
 
         # Create a new event loop for ourselves to queue and send commands
@@ -104,14 +113,37 @@ class APTDevice():
         self.read_interval = 0.01
         """Time to wait between read attempts on the serial port, in seconds."""
 
-        # Request the controller to start sending regular status updates
-        for bay in self.bays:
-           self._loop.call_soon(self._write, apt.hw_start_updatemsgs(source=EndPoint.HOST, dest=bay))
+        self.keepalive_message = apt.mot_ack_dcstatusupdate
+        """
+        Function to generate the keepalive message which are sent at regular intervals when status
+        updates are configured as ``"auto"``.
+        Examples are ``mot_ack_dcstatusupdate``, ``pz_ack_pzstatusupdate``, ``pzmot_ack_statusupdate``
+        or similar from :class:`thorlabs_apt_device.protocol.functions`, and are device specific.
+        """
+        self.keepalive_interval = 0.9
+        """Time interval between sending of keepalive messages, in seconds."""
 
-        # Schedule sending of the "keep alive" acknowledgement commands
-        self._loop.call_soon(self._schedule_keepalives)
-        self.keepalive_interval = 0.5
-        """Time interval between sending of keepalive commands, in seconds."""
+        self.update_message = apt.mot_req_statusupdate
+        """
+        Function to generate the status update request message which are sent at regular intervals
+        when status updates are configured as ``"polled"``.
+        Examples are ``mot_req_statusupdate``, ``mot_req_dcstatusupdate``, ``mot_req_statusbits``,
+        ``rack_req_statusbits``, ``la_req_statusupdate`` or similar from
+        :class:`thorlabs_apt_device.protocol.functions`, and are device specific.
+        """
+        self.update_interval = 0.2
+        """Time interval between sending of status update requests, in seconds."""
+
+        if status_updates == "auto":
+            # Request the controller to start sending regular status updates
+            # Wait a little while though so sub-class init stuff can take effect first
+            for bay in self.bays:
+                self._loop.call_later(0.25, self._write, apt.hw_start_updatemsgs(source=EndPoint.HOST, dest=bay))
+            # Schedule sending of the "keep alive" acknowledgement commands
+            self._loop.call_later(0.75, self._schedule_keepalives)
+        elif status_updates == "polled":
+            # Schedule sending of the update request
+            self._loop.call_later(0.25, self._schedule_updates)
 
         # Create a new thread to run the event loop in
         self._thread = Thread(target=self._run_eventloop)
@@ -177,7 +209,7 @@ class APTDevice():
         """
         #self._log.debug(f"Writing command bytes: {command_bytes}")
         self._port.write(command_bytes)
-        self._port.flush()
+        #self._port.flush()
 
 
     def _schedule_reads(self):
@@ -186,7 +218,7 @@ class APTDevice():
         """
         #self._log.debug(f"Checking for data on serial port.")
         for msg in self._unpacker:
-            self._log.debug(f"Received message: {msg}")
+            #self._log.debug(f"Received message: {msg}")
             self._process_message(msg)
         # Schedule next check
         self._loop.call_later(self.read_interval, self._schedule_reads)
@@ -194,13 +226,24 @@ class APTDevice():
 
     def _schedule_keepalives(self):
         """
-        Send the "keep alive" acknowledgement command at regular intervals.
+        Send the "keep alive" acknowledgement command at regular intervals if status updates configured as ``"auto"``.
         """
         #self._log.debug(f"Sending keep alive acknowledgement.")
         for bay in self.bays:
-            self._loop.call_soon(self._write, apt.mot_ack_dcstatusupdate(source=EndPoint.HOST, dest=bay))
+            self._loop.call_soon(self._write, self.keepalive_message(source=EndPoint.HOST, dest=bay))
         # Schedule next send
         self._loop.call_later(self.keepalive_interval, self._schedule_keepalives)
+
+
+    def _schedule_updates(self):
+        """
+        Send the status update request at regular intervals if status updates configured as ``"polled"``.
+        """
+        for bay in self.bays:
+            for channel in self.channels:
+                self._loop.call_soon(self._write, self.update_message(source=EndPoint.HOST, dest=bay, chan_ident=channel))
+        # Schedule next send
+        self._loop.call_later(self.update_interval, self._schedule_updates)
 
 
     def _process_message(self, m):
@@ -212,7 +255,7 @@ class APTDevice():
         # TODO: Process any messages common to all APT controllers (which ones?)
         if m.msg == "hw_response":
             # Should there be an error code? The documentation is a little unclear
-            self._log.warn(f"Received unknown event notification from APT device {m.source}, {m.data[2:4]}.")
+            self._log.warn(f"Received unknown event notification from APT device {m.source}.")
             for callback in self._error_callbacks:
                 callback(source=m.source, msgid=0, code=-1, notes="unknown")
         elif m.msg == "hw_rich_response":

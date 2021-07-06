@@ -33,14 +33,15 @@ class APTDevice_Motor(APTDevice):
     :param home: Perform a homing operation on initialisation.
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse".
     :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
+    :param status_updates: Set to ``"auto"``, ``"polled"`` or ``"none"``.
     :param controller: The destination :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>` for the controller.
     :param bays: Tuple of :class:`EndPoint <thorlabs_apt_device.enums.EndPoint>`\\ (s) for the populated controller bays.
     :param channels: Tuple of indices (1-based) for the controller bay's channels.
     """
 
-    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number=None, location=None, home=True, invert_direction_logic=False, swap_limit_switches=False, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number=None, location=None, home=True, invert_direction_logic=False, swap_limit_switches=False, status_updates="none", controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
 
-        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, controller=controller, bays=bays, channels=channels)
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, controller=controller, bays=bays, channels=channels, status_updates=status_updates)
 
         self.invert_direction_logic = invert_direction_logic
         """
@@ -196,6 +197,26 @@ class APTDevice_Motor(APTDevice):
             for channel in self.channels:
                 self._loop.call_soon_threadsafe(self._write, apt.mot_req_jogparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
 
+        self.homeparams_ = [[{
+            "home_dir" : 0,
+            "limit_switch" : 0,
+            "home_velocity" : 0,
+            "offset_distance" : 0
+        } for _ in self.channels] for _ in self.bays]
+        """
+        Array of dictionaries of jog parameters.
+
+        As a device may have multiple card bays, each with multiple channels, this data structure
+        is an array of array of dicts. The first axis of the array indexes the bay, the second
+        indexes the channel.
+
+        Keys are ``"home_dir"``, ``"limit_switch"``, ``"home_velocity"``, and ``"offset_distance"``.
+        """
+        # Request current home parameters
+        for bay in self.bays:
+            for channel in self.channels:
+                self._loop.call_soon_threadsafe(self._write, apt.mot_req_homeparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
+
         # Home each device if requested
         if home:
             for bay_i, _ in enumerate(self.bays):
@@ -203,7 +224,18 @@ class APTDevice_Motor(APTDevice):
                     self.set_enabled(True, bay=bay_i, channel=channel_i)
                     # Sending enabled then home immediately on the TDC001 locks it up.
                     #self.home(bay=bay_i, channel=channel_i)
+                    # Instead, initiate homing after some time delay
                     self._loop.call_later(1.0, self.home, bay_i, channel_i)
+
+
+    def close(self):
+        """
+        Stop the device and close the serial connection to the ThorLabs APT controller.
+        """
+        for bay_i, _ in enumerate(self.bays):
+            for channel_i, _ in enumerate(self.channels):
+                self.stop(bay=bay_i, channel=channel_i)
+        super().close()
 
 
     def _process_message(self, m):
@@ -214,6 +246,7 @@ class APTDevice_Motor(APTDevice):
                      "mot_get_velparams",
                      "mot_get_genmoveparams", "mot_genmoveparams",
                      "mot_get_jogparams",
+                     "mot_get_homeparams",
                      "mot_get_avmodes"):
             if m.source == EndPoint.USB:
                 # Map USB controller endpoint to first bay
@@ -224,7 +257,9 @@ class APTDevice_Motor(APTDevice):
                     bay_i = self.bays.index(m.source)
                 except ValueError:
                     # Ignore message from unknown bay id
-                    self._log.warn(f"Message {m.msg} has unrecognised source={m.source}.")
+                    if not m.source == 0:
+                        # Some devices return zero as source of move_completed etc
+                        self._log.warn(f"Message {m.msg} has unrecognised source={m.source}.")
                     bay_i = 0
                     #return
             # Check if channel matches one of our channels
@@ -233,7 +268,8 @@ class APTDevice_Motor(APTDevice):
             except ValueError:
                     # Ignore message from unknown channel id
                     self._log.warn(f"Message {m.msg} has unrecognised channel={m.chan_ident}.")
-                    return
+                    channel_i = 0
+                    #return
         
         # Act on each message type
         if m.msg in ("mot_get_statusupdate", "mot_get_dcstatusupdate", "mot_move_stopped", "mot_move_completed"):
@@ -242,7 +278,7 @@ class APTDevice_Motor(APTDevice):
             # Scale velocity so it should be in mm/second
             # The explanation of scaling in the documentation doesn't make sense, but
             # dividing the returned value by 2.048 seems sensible (or by 2048 to give m/s)
-            self.status_[bay_i][channel_i]["velocity"] /= 2.048
+            #self.status_[bay_i][channel_i]["velocity"] /= 2.048
             # Swap meaning of "moving forward" and "moving reverse" if requested
             if self.invert_direction_logic:
                 tmp = self.status_[bay_i][channel_i]["moving_forward"]
@@ -262,6 +298,9 @@ class APTDevice_Motor(APTDevice):
         elif m.msg == "mot_get_jogparams":
             # Jog move parameter update
             self.jogparams_[bay_i][channel_i].update(m._asdict())
+        elif m.msg == "mot_get_homeparams":
+            # Home parameter update
+            self.homeparams_[bay_i][channel_i].update(m._asdict())
         else:
             #self._log.debug(f"Received message (unhandled): {m}")
             pass
@@ -462,6 +501,30 @@ class APTDevice_Motor(APTDevice):
         self._loop.call_soon_threadsafe(self._write, apt.mot_req_genmoveparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))
 
 
+    def set_home_params(self, velocity, offset_distance, direction="reverse", bay=0, channel=0):
+        """
+        Set parameters for homing commands.
+
+        :param velocity: Velocity for homing operations.
+        :param offset_distance: Distance of home position from the home limit switch.
+        :param direction: Direction for homing movement. Set to ``"forward"`` or ``"reverse"``.
+        :param bay: Index (0-based) of controller bay to send the command.
+        :param channel: Index (0-based) of controller bay channel to send the command.
+        """
+        if direction == "forward":
+            direction = 1
+            limit_switch = 4
+        else:
+            direction = 2
+            limit_switch = 1
+        self._log.debug(f"Setting home parameters to velocity={velocity}, offset_distance={offset_distance}, direction={direction}, limit_switch={limit_switch} [bay={self.bays[bay]:#x}, channel={self.channels[channel]}].")
+        self._loop.call_soon_threadsafe(self._write, apt.mot_set_homeparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel], home_dir=direction, limit_switch=limit_switch, home_velocity=velocity, offset_distance=offset_distance))
+        # Update status with new home parameters
+        self._loop.call_soon_threadsafe(self._write, apt.mot_req_homeparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))
+
+
+
+
 class APTDevice_Motor_Trigger(APTDevice_Motor):
     """
     A class for the ThorLabs APT device motor-driven families BSC, BBD, TBD and KBD.
@@ -477,10 +540,11 @@ class APTDevice_Motor_Trigger(APTDevice_Motor):
     :param home: Perform a homing operation on initialisation.
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse" directions.
     :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
+    :param status_updates: Set to ``"auto"``, ``"polled"`` or ``"none"``.
     """
-    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number=None, location=None, home=True, invert_direction_logic=False, swap_limit_switches=False, controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number=None, location=None, home=True, invert_direction_logic=False, swap_limit_switches=False, status_updates="none", controller=EndPoint.RACK, bays=(EndPoint.BAY0,), channels=(1,)):
 
-        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, controller=EndPoint.RACK, bays=bays, channels=(1,))
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches, status_updates=status_updates, controller=EndPoint.RACK, bays=bays, channels=(1,))
         
         self.trigger_ = [[{
             # Actual integer code returned by device
@@ -520,14 +584,14 @@ class APTDevice_Motor_Trigger(APTDevice_Motor):
             except ValueError:
                 # Ignore message from unknown bay id
                 self._log.warn(f"Message {m.msg} has unrecognised source={m.source}.")
-                return
+                bay_i = 0
             # Check if channel matches one of our channels
             try:
                 channel_i = self.channels.index(m.chan_ident)
             except ValueError:
-                    # Ignore message from unknown channel id
-                    self._log.warn(f"Message {m.msg} has unrecognised channel={m.chan_ident}.")
-                    return
+                # Ignore message from unknown channel id
+                self._log.warn(f"Message {m.msg} has unrecognised channel={m.chan_ident}.")
+                channel_i = 0
         
         if m.msg == "mot_get_trigger":
             # Trigger mode update message
