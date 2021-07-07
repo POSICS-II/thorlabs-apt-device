@@ -19,7 +19,7 @@ For example, the :mod:`TDC001 <thorlabs_apt_device.devices.tdc001>` is a relativ
 motion controller, and the class to implement it is only a few lines of code since it is able to
 be derived from the :mod:`motor class <thorlabs_apt_device.devices.aptdevice_motor>`.
 
-There is no dependence on the Thorlabs software or libraries, and so is platform-agnostic.
+The code has no dependence on the Thorlabs software or libraries, and so is platform-agnostic.
 It has been tested on Linux and Windows, but should work on all other operating systems supported
 by the pyserial library.
 
