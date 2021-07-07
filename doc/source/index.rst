@@ -23,8 +23,8 @@ The code has no dependence on the Thorlabs software or libraries, and so is plat
 It has been tested on Linux and Windows, but should work on all other operating systems supported
 by the pyserial library.
 
-Source code can be found at `<https://gitlab.com/ptapping/thorlabs-apt-device>`__.
-Python Package Index pypi page at `<https://pypi.org/project/thorlabs-apt-device/>`__.
+Source code is at `<https://gitlab.com/ptapping/thorlabs-apt-device>`__.
+Python Package Index (pypi) page at `<https://pypi.org/project/thorlabs-apt-device/>`__.
 Documentation online at `<https://thorlabs-apt-device.readthedocs.io/>`__.
 
 User Guide
