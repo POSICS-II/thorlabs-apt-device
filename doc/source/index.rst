@@ -17,9 +17,15 @@ If the device is very similar to something already implemented, then the amount 
 can be very small.
 For example, the :mod:`TDC001 <thorlabs_apt_device.devices.tdc001>` is a relatively simple DC motor driven
 motion controller, and the class to implement it is only a few lines of code since it is able to
-be derived from the :mod:`DC motor class <thorlabs_apt_device.devices.aptdevice_dc>`.
+be derived from the :mod:`motor class <thorlabs_apt_device.devices.aptdevice_motor>`.
 
-Source code can be found `here <https://gitlab.com/ptapping/thorlabs-apt-device>`_.
+The code has no dependence on the Thorlabs software or libraries, and so is platform-agnostic.
+It has been tested on Linux and Windows, but should work on all other operating systems supported
+by the pyserial library.
+
+Source code is at `<https://gitlab.com/ptapping/thorlabs-apt-device>`__.
+Python Package Index (pypi) page at `<https://pypi.org/project/thorlabs-apt-device/>`__.
+Documentation online at `<https://thorlabs-apt-device.readthedocs.io/>`__.
 
 User Guide
 ----------
@@ -28,6 +34,7 @@ User Guide
    :maxdepth: 2
 
    gettingstarted
+   newdevices
 
 API Documentation
 -----------------

@@ -13,6 +13,7 @@ Submodules
    :maxdepth: 4
 
    thorlabs_apt_device.devices.aptdevice
-   thorlabs_apt_device.devices.aptdevice_dc
+   thorlabs_apt_device.devices.aptdevice_motor
    thorlabs_apt_device.devices.bbd
+   thorlabs_apt_device.devices.bsc
    thorlabs_apt_device.devices.tdc001

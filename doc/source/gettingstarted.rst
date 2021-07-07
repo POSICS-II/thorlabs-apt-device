@@ -39,23 +39,40 @@ and optionally installed to your system using ``pip``:
     pip install --user ./thorlabs-apt-device
 
 
+Windows Only: Enable Virtual COM Port
+--------------------------------------
+
+On Windows, the virtual serial communications port (VCP) may need to be enabled in the driver
+options for the USB interface device.
+First, open the Windows Device Manager.
+If plugging in the controller causes a new COM device to appear under the "Ports (COM & LPT)"
+section, then there is nothing more to do.
+If a new COM device does not appear, then find the controller device under "Universal Serial Bus
+Controllers", it may be called "Thorlabs APT Controller" or similar (see what new device appears
+when plugging in the controller).
+Right-click->Properties->Advanced tab, check the "Load VCP" box, then OK out of the dialog back to
+the device manager.
+Unplug and re-plug the USB connection to the controller, and ensure than a new COM device now
+appears.
+
+
 Usage
 -----
 
 .. code-block:: python
 
-    # For a device based on a DC motor, such as a translation stage
-    from thorlabs_apt_device import APTDevice_DC
+    # The BBD201 DC motor controller has a dedicated class which handles its specifics
+    from thorlabs_apt_device import BBD201
 
     # You can try to find a device automatically:
-    stage = APTDevice_DC()
-    # Or, if you know the serial number of the device starts with "123":
-    # stage = APTDevice_DC(serial_number="123")
+    stage = BBD201()
+    # Or, if you know the serial number of the device starts with "73123":
+    # stage = BBD201(serial_number="73123")
     # You can also specify the serial port device explicitly.
     # On Windows, your serial port may be called COM3, COM5 etc.
-    # stage = APTDevice_DC("/dev/ttyUSB0")
+    # stage = BBD201("/dev/ttyUSB0")
 
-    # Flash the LED on the device to identify it (default is first bay/channel)
+    # Flash the LED on the device to identify it
     stage.identify()
 
     # Do some moves (encoder counts)
@@ -64,10 +81,10 @@ Usage
     # stage.move_absolute(12345)
 
     # See all the status fields of the device
-    print(stage.status_)
+    print(stage.status)
 
-    # See the position of first bay and channel (in encoder counts)
-    print(stage.status_[0][0]["position"])
+    # See the position (in encoder counts)
+    print(stage.status["position"])
 
     # Register for callbacks in case the device reports an error
     def error_callback(source, msgid, code, notes):

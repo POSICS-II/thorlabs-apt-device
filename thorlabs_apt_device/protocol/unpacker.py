@@ -91,18 +91,18 @@ class Unpacker:
             dest = self.buf[4] & ~0x80      # Destination is remaining lower bits
             source = self.buf[5]
             # Destination should be the Host, source should be a recognised controller ID
-            if not ((dest == 0x01) and (source in (0x11, 0x21, 0x22, 0x23, 0x24, 0x25,
-                                                   0x26, 0x27, 0x28, 0x29, 0x2A, 0x50))):
+            if not ((dest in (0x00, 0x01)) and (source in (0x00, 0x11, 0x21, 0x22, 0x23, 0x24, 0x25,
+                                                           0x26, 0x27, 0x28, 0x29, 0x2A, 0x50))):
                 self._decoding_error("Invalid source or destination for message with id="
-                                    f"{msgid:#x}, src={source:#x}, dest={dest:#x}")
+                                    f"{msgid:#x}, src={source:#04x}, dest={dest:#04x}")
                 continue
             # Message ID, source and dest seem legit, now check long form length
             if long_form:
                 # A bad or malicious packet could make us try to read up to 65 kB...
                 # Documentation says "currently no datapacket exceeds 255 bytes in length"
                 if length > 255:
-                    self._decoding_error(f"Invalid length={length} for message with id={msgid:#x},"
-                                         f" src={source:#x}, dest={dest:#x}")
+                    self._decoding_error(f"Invalid length={length} for message with id={msgid:#06x},"
+                                         f" src={source:#04x}, dest={dest:#04x}")
                     continue
             else:
                 # Length field is actually two parameters in short form messages
