@@ -234,7 +234,9 @@ class APTDevice_Motor(APTDevice):
         """
         for bay_i, _ in enumerate(self.bays):
             for channel_i, _ in enumerate(self.channels):
-                self.stop(bay=bay_i, channel=channel_i)
+                try:
+                    self.stop(bay=bay_i, channel=channel_i)
+                except: pass
         super().close()
 
 
