@@ -226,6 +226,7 @@ class APTDevice_Motor(APTDevice):
                     #self.home(bay=bay_i, channel=channel_i)
                     # Instead, initiate homing after some time delay
                     self._loop.call_later(1.0, self.home, bay_i, channel_i)
+                    self.status_[bay_i][channel_i]["homing"] = True
 
 
     def close(self):
