@@ -108,7 +108,7 @@ class BSC(APTDevice_BayUnit):
             self.loopparams_[bay_i][channel_i].update(m._asdict())
 
 
-    def set_loopparams(self, loop_mode=None, prop=None, integral=None, diff=None, pid_clip=None, pid_tol=None, encoder_const=None, bay=0, channel=0):
+    def set_loop_params(self, loop_mode=None, prop=None, integral=None, diff=None, pid_clip=None, pid_tol=None, encoder_const=None, bay=0, channel=0):
         """
         Configure the closed-loop positioning parameters used by encoded stages.
 
@@ -165,6 +165,12 @@ class BSC201_DRV250(BSC201):
 
     For the DRV250, there are 409600 microsteps/mm, 21987328 microsteps/mm/s, and 4506 microsteps/mm/s/s.
 
+    For the models with the optical encoder (LNR502E, LNR502E/M), use the parameter
+    ``closed_loop=True`` to enable closed-loop positioning. This will configure the controller
+    parameters to use feedback from the encoder during positioning. For non-encoded stages, or to
+    use open-loop control, this should be set to ``closed_loop=False``.
+
+    :param closed_loop: Boolean to indicate the use of an encoded stage (the "E" in LNR502E) in closed-loop mode, default is False.
     :param serial_port: Serial port device the device is connected to.
     :param vid: Numerical USB vendor ID to match.
     :param pid: Numerical USB product ID to match.
@@ -175,7 +181,7 @@ class BSC201_DRV250(BSC201):
     :param invert_direction_logic: Invert the meaning of "forward" and "reverse" directions.
     :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
     """
-    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="40", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True):
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="40", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True, closed_loop=False):
 
         super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches)
 
@@ -186,4 +192,15 @@ class BSC201_DRV250(BSC201):
                 self.set_velocity_params(acceleration=4506, max_velocity=21987328, bay=bay_i, channel=channel_i)
                 self.set_jog_params(size=409600, acceleration=4506, max_velocity=21987328, bay=bay_i, channel=channel_i)
                 self.set_home_params(velocity=21987328, offset_distance=20480, bay=bay_i, channel=channel_i)
-       
+    
+        if closed_loop:
+            # Configure some default parameters for the closed-loop positioning routine
+            for bay_i, _ in enumerate(self.bays):
+                for channel_i, _ in enumerate(self.channels):
+                    self.set_loop_params(loop_mode=2, prop=50000, integral=5000, diff=100, pid_clip=16000000, pid_tol=200, encoder_const=4292282941, bay=0, channel=0)
+        else:
+            # Use open-loop positioning (only using stepper counts)
+            for bay_i, _ in enumerate(self.bays):
+                for channel_i, _ in enumerate(self.channels):
+                    self.set_loop_params(loop_mode=1, prop=0, integral=0, diff=0, pid_clip=0, pid_tol=0, encoder_const=0, bay=0, channel=0)
+
