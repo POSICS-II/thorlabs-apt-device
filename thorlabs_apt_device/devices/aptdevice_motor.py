@@ -771,20 +771,20 @@ class APTDevice_BayUnit(APTDevice_Motor_Trigger):
 
         if x == 1:
             self.status = self.status_[0][0]
-            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_Motor.status_`."""
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor.status_`."""
             
             self.velparams = self.velparams_[0][0]
-            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_Motor.velparams_`"""
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor.velparams_`"""
             
             self.genmoveparams = self.genmoveparams_[0][0]
-            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_Motor.genmoveparams_`"""
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor.genmoveparams_`"""
             
             self.jogparams = self.jogparams_[0][0]
-            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_Motor.jogparams_`"""
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor.jogparams_`"""
             
             self.homeparams = self.homeparams_[0][0]
-            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_dc.APTDevice_Motor.homeparams_`"""
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor.homeparams_`"""
 
             self.trigger = self.trigger_[0][0]
-            """Alias to first bay/channel of :data:`~BBD.trigger_`"""
+            """Alias to first bay/channel of :data:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor_Trigger.trigger_`"""
 
