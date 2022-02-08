@@ -197,7 +197,7 @@ class BSC201_DRV250(BSC201):
             # Configure some default parameters for the closed-loop positioning routine
             for bay_i, _ in enumerate(self.bays):
                 for channel_i, _ in enumerate(self.channels):
-                    self.set_loop_params(loop_mode=2, prop=50000, integral=5000, diff=100, pid_clip=16000000, pid_tol=200, encoder_const=4292282941, bay=0, channel=0)
+                    self.set_loop_params(loop_mode=2, prop=50000, integral=5000, diff=100, pid_clip=16000000, pid_tol=80, encoder_const=4292282941, bay=0, channel=0)
         else:
             # Use open-loop positioning (only using stepper counts)
             for bay_i, _ in enumerate(self.bays):
