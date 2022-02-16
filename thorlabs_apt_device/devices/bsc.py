@@ -79,15 +79,37 @@ class BSC(APTDevice_BayUnit):
             for channel in self.channels:
                 self._loop.call_soon_threadsafe(self._write, apt.mot_req_kcubekstloopparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
 
+        self.powerparams_ = [[{
+            "rest_factor": 0,
+            "move_factor": 0,
+            # Update message fields
+            "msg" : "",
+            "msgid" : 0,
+            "source" : 0,
+            "dest" : 0,
+            "chan_ident" : 0,
+        } for _ in self.channels] for _ in self.bays]
+        """
+        Parameters for the motor power parameters.
+
+        Fields are ``"rest_factor"`` and ``"move_factor"``.
+        """
+        # Request current motor power parameters
+        for bay in self.bays:
+            for channel in self.channels:
+                self._loop.call_soon_threadsafe(self._write, apt.mot_req_powerparams(source=EndPoint.HOST, dest=bay, chan_ident=channel))
+
         if x == 1:
             self.loopparams = self.loopparams_[0][0]
             """Alias to first bay/channel of :data:`loopparams_`."""
+            self.powerparams = self.powerparams_[0][0]
+            """Alias to first bay/channel of :data:`powerparams`."""
 
     def _process_message(self, m):
         super()._process_message(m)
 
         # Decode bay and channel IDs and check if they match one of ours
-        if m.msg in ("mot_get_kcubekstloopparams",):
+        if m.msg in ("mot_get_kcubekstloopparams", "mot_get_powerparams"):
             # Check if source matches one of our bays
             try:
                 bay_i = self.bays.index(m.source)
@@ -106,13 +128,25 @@ class BSC(APTDevice_BayUnit):
         if m.msg == "mot_get_kcubekstloopparams":
             # Control loop update message
             self.loopparams_[bay_i][channel_i].update(m._asdict())
+        elif m.msg == "mot_get_powerparams":
+            # Motor power update message
+            self.powerparams_[bay_i][channel_i].update(m._asdict())
 
 
     def set_loop_params(self, loop_mode=None, prop=None, integral=None, diff=None, pid_clip=None, pid_tol=None, encoder_const=None, bay=0, channel=0):
         """
         Configure the closed-loop positioning parameters used by encoded stages.
 
-        Note that the keyword parameter to modify the "int" value is named "integral" so as not to confuse it with the python int keyword.
+        The closed-loop control algorithm is a PID style. Note that the keyword parameter to modify
+        the "int" value is named "integral" so as not to confuse it with the python int keyword.
+
+        :param loop_mode: Set to 1 if open-loop, 2 for closed-loop mode.
+        :param prop: Coefficient of the proportional gain term.
+        :param integral: Coefficient of the integral gain term.
+        :param diff: Coefficient of the differential gain term.
+        :param pid_clip: Maximum value of the PID algorithm output.
+        :param pid_tol: Minimum allowed (non-zero) value of the PID algorithm output.
+        :encoder_const: Coefficient to map encoder counts to motor steps.
         """
         if loop_mode is None:
             loop_mode = self.loopparams_[bay][channel]["loop_mode"]
@@ -133,6 +167,28 @@ class BSC(APTDevice_BayUnit):
         self._loop.call_soon_threadsafe(self._write, apt.mot_set_kcubekstloopparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel], loop_mode=loop_mode, prop=prop, int=integral, diff=diff, pid_clip=pid_clip, pid_tol=pid_tol, encoder_const=encoder_const))
         # Update status with new loop parameters
         self._loop.call_soon_threadsafe(self._write, apt.mot_req_kcubekstloopparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))
+
+
+    def set_power_params(self, rest_factor=None, move_factor=None, bay=0, channel=0):
+        """
+        Configure the motor power parameters used during movement and rest.
+
+        Values are expressed as a percentage between ``0`` and ``100``. Typically move power should
+        be set to ``100``, and the rest power reduced to prevent excessive heating of the motor.
+
+
+        :param rest_factor: Percentage power used when at rest.
+        :param move_factor: Percentage power used when moving.
+        """
+        if rest_factor is None:
+            rest_factor = self.loopparams_[bay][channel]["rest_factor"]
+        if move_factor is None:
+            move_factor = self.loopparams_[bay][channel]["move_factor"]
+        
+        self._log.debug(f"Setting motor power parameters for [bay={self.bays[bay]:#x}, channel={self.channels[channel]}].")
+        self._loop.call_soon_threadsafe(self._write, apt.mot_set_powerparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel], rest_factor=rest_factor, move_factor=move_factor))
+        # Update status with new power parameters
+        self._loop.call_soon_threadsafe(self._write, apt.mot_req_powerparams(source=EndPoint.HOST, dest=self.bays[bay], chan_ident=self.channels[channel]))
 
 
 class BSC201(BSC):

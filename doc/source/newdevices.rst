@@ -6,6 +6,15 @@ specific class associated with it, and so you will need to write some code to su
 However, the layout of the library has been designed to try and minimise the amount of code
 required for new devices.
 
+APT Communications Protocol
+---------------------------
+
+All APT protocol messages are able to be encoded and decoded by the help of the
+:data:`~thorlabs_apt_device.protocol` package. The details of these messages, and their
+applicability to particular hardware devices, is documented in the `APT Communications Protocol
+<https://www.thorlabs.com/Software/Motion%20Control/APT_Communications_Protocol.pdf>`__ PDF document
+on the Thorlabs website.
+
 Class Hierarchy
 ---------------
 
