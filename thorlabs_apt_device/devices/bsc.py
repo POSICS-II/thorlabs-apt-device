@@ -27,9 +27,10 @@ class BSC(APTDevice_BayUnit):
     :class:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_BayUnit` with the
     addition of the control loop parameters used for encoded stages.
 
-    Note it seems that at least some of the BSC series will send automatic status updates, but does
-    not accept the corresponding acknowledgement message, and so will stop responding after ~5
-    seconds if they are enabled. As a workaround, the status of the device will be polled.
+    Note that it seems (at least some of) the BSC series will send automatic status updates, but
+    they do not support the corresponding acknowledgement message, and so will stop responding after
+    ~5 seconds due to the lack of acknowledgement from the host. As a workaround, the status of the
+    device will be polled.
 
     Additionally, it seems that the initial movement and homing velocities can be effectively zero,
     making it seem like the device is not working, though it is actually just moving extremely

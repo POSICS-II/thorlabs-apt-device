@@ -18,12 +18,14 @@ on the Thorlabs website.
 Class Hierarchy
 ---------------
 
-The most fundamental features common to all devices is handled in the ``APTDevice`` main parent
-class.
-Sub-classes extend this to implement additional functionality.
-For example, the ``APTDevice_Motor`` class implements features related to motor-driven devices.
-Finally, classes like ``BSC201_DRV250`` are specific to the BSC201 controller paired with the
-DRV250 linear actuator.
+The most fundamental features common to all devices is handled in the
+:data:`~thorlabs_apt_device.devices.aptdevice.APTDevice` main parent class. Sub-classes extend this
+to implement additional functionality. For example, the
+:data:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor` class implements features
+related to motor-driven devices. A further subclass such as
+:data:`~thorlabs_apt_device.devices.bsc.BSC` supports the series of benchtop stepper motor
+controllers. Finally, classes like :data:`~thorlabs_apt_device.devices.bsc.BSC201_DRV250` are
+specific to the BSC201 controller paired with the DRV250 linear actuator.
 
 Supporting a new device starts by identifying a class which already implements the most number of
 features, and then creating a new extension class.
