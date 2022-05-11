@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["BSC", "BSC201", "BSC201_DRV250"]
+__all__ = ["BSC", "BSC201", "BSC203", "BSC201_DRV250", "BSC203_DRV208"]
 
 from .. import protocol as apt
 from .aptdevice_motor import APTDevice_BayUnit
