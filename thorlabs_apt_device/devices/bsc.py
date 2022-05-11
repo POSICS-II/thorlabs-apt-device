@@ -156,6 +156,27 @@ class BSC201(BSC):
         super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, x=1, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches)
 
 
+class BSC203(BSC):
+    """
+    A class for ThorLabs APT device model BSC203.
+
+    It is based off :class:`BSC`, but looking for a serial number starting with ``"70"`` and setting ``x = 3``.
+
+    :param serial_port: Serial port device the device is connected to.
+    :param vid: Numerical USB vendor ID to match.
+    :param pid: Numerical USB product ID to match.
+    :param manufacturer: Regular expression to match to a device manufacturer string.
+    :param product: Regular expression to match to a device product string.
+    :param serial_number: Regular expression to match to a device serial number.
+    :param home: Perform a homing operation on initialisation.
+    :param invert_direction_logic: Invert the meaning of "forward" and "reverse" directions.
+    :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
+    """
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="70", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True):
+
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, x=3, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches)
+
+
 class BSC201_DRV250(BSC201):
     """
     A class for ThorLabs APT device model BSC201 with DRV250 stepper-motor-driven actuator, sold as
@@ -182,6 +203,56 @@ class BSC201_DRV250(BSC201):
     :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
     """
     def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="40", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True, closed_loop=False):
+
+        super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches)
+
+        # Initial velocity parameters are effectively zero on startup, set something more sensible
+        # Homing is initiated 1.0s after init, so hopefully these will take effect before then...
+        for bay_i, _ in enumerate(self.bays):
+            for channel_i, _ in enumerate(self.channels):
+                self.set_velocity_params(acceleration=4506, max_velocity=21987328, bay=bay_i, channel=channel_i)
+                self.set_jog_params(size=409600, acceleration=4506, max_velocity=21987328, bay=bay_i, channel=channel_i)
+                self.set_home_params(velocity=21987328, offset_distance=20480, bay=bay_i, channel=channel_i)
+    
+        if closed_loop:
+            # Configure some default parameters for the closed-loop positioning routine
+            for bay_i, _ in enumerate(self.bays):
+                for channel_i, _ in enumerate(self.channels):
+                    self.set_loop_params(loop_mode=2, prop=50000, integral=5000, diff=100, pid_clip=16000000, pid_tol=80, encoder_const=4292282941, bay=0, channel=0)
+        else:
+            # Use open-loop positioning (only using stepper counts)
+            for bay_i, _ in enumerate(self.bays):
+                for channel_i, _ in enumerate(self.channels):
+                    self.set_loop_params(loop_mode=1, prop=0, integral=0, diff=0, pid_clip=0, pid_tol=0, encoder_const=0, bay=0, channel=0)
+
+
+class BSC203_DRV208(BSC203):
+    """
+    A class for ThorLabs APT device model BSC203 with three DRV208 stepper-motor-driven actuator,
+    sold as a package as the `3-Axis NanoMax Stage with Stepper Motor Actuators
+    <https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=2386&pn=MAX381/M>`__.
+
+    It is based off :class:`BSC203`, but with sensible default movement parameters configured for the actuator.
+
+    For the DRV208, there are 819200 microsteps/mm, 43974656 microsteps/mm/s, and 9012 microsteps/mm/s/s.
+
+    For the models with the optical encoder (MAX381, MAX381/M), use the parameter
+    ``closed_loop=True`` to enable closed-loop positioning. This will configure the controller
+    parameters to use feedback from the encoder during positioning. For non-encoded stages, or to
+    use open-loop control, this should be set to ``closed_loop=False``.
+
+    :param closed_loop: Boolean to indicate the use of an encoded stage (MAX381) in closed-loop mode, default is False.
+    :param serial_port: Serial port device the device is connected to.
+    :param vid: Numerical USB vendor ID to match.
+    :param pid: Numerical USB product ID to match.
+    :param manufacturer: Regular expression to match to a device manufacturer string.
+    :param product: Regular expression to match to a device product string.
+    :param serial_number: Regular expression to match to a device serial number.
+    :param home: Perform a homing operation on initialisation.
+    :param invert_direction_logic: Invert the meaning of "forward" and "reverse" directions.
+    :param swap_limit_switches: Swap "forward" and "reverse" limit switch values.
+    """
+    def __init__(self, serial_port=None, vid=None, pid=None, manufacturer=None, product=None, serial_number="70", location=None, home=True, invert_direction_logic=False, swap_limit_switches=True, closed_loop=False):
 
         super().__init__(serial_port=serial_port, vid=vid, pid=pid, manufacturer=manufacturer, product=product, serial_number=serial_number, location=location, home=home, invert_direction_logic=invert_direction_logic, swap_limit_switches=swap_limit_switches)
 
