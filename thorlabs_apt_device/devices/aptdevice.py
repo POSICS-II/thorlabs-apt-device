@@ -131,8 +131,13 @@ class APTDevice():
         ``rack_req_statusbits``, ``la_req_statusupdate`` or similar from
         :class:`thorlabs_apt_device.protocol.functions`, and are device specific.
         """
-        self.update_interval = 0.2
-        """Time interval between sending of status update requests, in seconds."""
+        self.update_interval = 0.01
+        """
+        Time interval between sending of status update requests, in seconds. Note that this is in
+        fact the delay to use after completing a previous status update, thus a value of 0.01 s does
+        not mean that status updates will be performed 100 times a second, depending on the time it
+        takes to complete a command, or the presence of other commands on the message queue.
+        """
 
         if status_updates == "auto":
             # Request the controller to start sending regular status updates
