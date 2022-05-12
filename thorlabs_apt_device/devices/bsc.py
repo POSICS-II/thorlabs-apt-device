@@ -38,7 +38,15 @@ class BSC(APTDevice_BayUnit):
     :meth:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor.set_velocity_params`,
     :meth:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor.set_jog_params` and
     :meth:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor.set_home_params` during
-    initialisation.
+    initialisation. What values qualify as "sensible" will depend on the particular stepper and
+    stage being controlled. For example, the DRV250 actuator has 409600 microsteps/mm, 21987328
+    microsteps/mm/s, and 4506 microsteps/mm/s/s. Thus, using ``acceleration=4506`` and
+    ``max_velocity=21987328`` in
+    :meth:`~thorlabs_apt_device.devices.aptdevice_motor.APTDevice_Motor.set_velocity_params` would
+    result in a movement speed of 1 mm/s and an acceleration of 1 mm/s/s. Consult the `APT
+    Communications Protocol
+    <https://www.thorlabs.com/Software/Motion%20Control/APT_Communications_Protocol.pdf>`__ PDF
+    document on the Thorlabs website for parameters for a specific stage.
 
     :param serial_port: Serial port device the device is connected to.
     :param vid: Numerical USB vendor ID to match.
